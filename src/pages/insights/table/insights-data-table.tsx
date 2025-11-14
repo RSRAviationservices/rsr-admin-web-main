@@ -1,0 +1,171 @@
+import {
+  type ColumnFiltersState,
+  type PaginationState,
+  type SortingState,
+  type VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import * as React from "react";
+
+
+import { insightColumns } from "./columns-insights";
+import { InsightsDataTableToolbar } from "./insights-data-table-toolbar";
+
+import { useInsights } from "@/api/queries/insight.query";
+import { DataTablePagination } from "@/components/common/data-table-pagination";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useDebounce } from "@/hooks/use-debounce";
+import type { InsightStatus } from "@/types/insight";
+
+export function InsightsDataTable() {
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [globalFilter, setGlobalFilter] = React.useState("");
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "publishedAt", desc: true },
+  ]);
+  const [{ pageIndex, pageSize }, setPagination] =
+    React.useState<PaginationState>({
+      pageIndex: 0,
+      pageSize: 10,
+    });
+
+  const debouncedSearch = useDebounce(globalFilter, 500);
+  const statusFilter = columnFilters.find((f) => f.id === "status")?.value as
+    | InsightStatus[]
+    | undefined;
+
+  const queryParams = React.useMemo(() => {
+    return {
+      page: pageIndex + 1,
+      limit: pageSize,
+      search: debouncedSearch,
+      status: statusFilter?.[0],
+      sortBy: sorting[0]?.id as
+        | "publishedAt"
+        | "title"
+        | "views"
+        | "createdAt"
+        | undefined,
+      sortOrder: sorting[0]?.desc ? ("desc" as const) : ("asc" as const),
+    };
+  }, [pageIndex, pageSize, debouncedSearch, statusFilter, sorting]);
+
+  const { data: response, isLoading, isError } = useInsights(queryParams);
+  const data = response?.data ?? [];
+  const pageCount = response?.pagination?.totalPages ?? 0;
+
+  const table = useReactTable({
+    data,
+    columns: insightColumns,
+    pageCount,
+    state: {
+      sorting,
+      columnVisibility,
+      rowSelection,
+      columnFilters,
+      globalFilter,
+      pagination: { pageIndex, pageSize },
+    },
+    enableRowSelection: true,
+    manualPagination: true,
+    manualFiltering: true,
+    enableGlobalFilter: true,
+    manualSorting: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  return (
+    <div className="space-y-4">
+      <InsightsDataTableToolbar table={table} />
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              Array.from({ length: pageSize }).map((_, i) => (
+                <TableRow key={i}>
+                  {insightColumns.map((_, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-6 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : isError ? (
+              <TableRow>
+                <TableCell
+                  colSpan={insightColumns.length}
+                  className="h-24 text-center text-red-500"
+                >
+                  Failed to load insights. Please try again.
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={insightColumns.length}
+                  className="h-24 text-center"
+                >
+                  No insights found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <DataTablePagination table={table} />
+    </div>
+  );
+}
