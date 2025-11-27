@@ -24,6 +24,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useDeleteInsight } from "@/api/queries/insight.query";
+import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { InsightStatus } from "@/types/insight";
 
@@ -67,7 +79,7 @@ export function InsightsDataTable() {
 
   const { data: response, isLoading, isError } = useInsights(queryParams);
   const data = response?.data ?? [];
-  const pageCount = response?.pagination?.totalPages ?? 0;
+  const pageCount = response?.meta?.totalPages ?? 0;
 
   const table = useReactTable({
     data,
@@ -95,9 +107,31 @@ export function InsightsDataTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const deleteMutation = useDeleteInsight();
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [selectedIdsToDelete, setSelectedIdsToDelete] = React.useState<string[]>([]);
+
+  const handleBulkDelete = (ids: string[]) => {
+    setSelectedIdsToDelete(ids);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await Promise.all(selectedIdsToDelete.map((id) => deleteMutation.mutateAsync(id)));
+      toast.success(`Successfully deleted ${selectedIdsToDelete.length} insights`);
+      setRowSelection({});
+    } catch (error) {
+      toast.error("Failed to delete some insights");
+    } finally {
+      setShowDeleteDialog(false);
+      setSelectedIdsToDelete([]);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <InsightsDataTableToolbar table={table} />
+      <InsightsDataTableToolbar table={table} onDelete={handleBulkDelete} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -108,9 +142,9 @@ export function InsightsDataTable() {
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -166,6 +200,26 @@ export function InsightsDataTable() {
         </Table>
       </div>
       <DataTablePagination table={table} />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete {selectedIdsToDelete.length} selected insight(s).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

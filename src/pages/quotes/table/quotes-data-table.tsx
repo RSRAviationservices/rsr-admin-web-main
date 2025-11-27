@@ -2,7 +2,8 @@ import type {
   ColumnFiltersState,
   PaginationState,
   SortingState,
-  VisibilityState} from '@tanstack/react-table';
+  VisibilityState
+} from '@tanstack/react-table';
 import {
   flexRender,
   getCoreRowModel,
@@ -25,6 +26,18 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
+import { useDeleteQuote } from '@/api/queries/quote.query'
+import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/use-debounce'
 import type { QuoteStatus } from '@/types/quote'
 
@@ -83,9 +96,31 @@ export function QuotesDataTable() {
     getCoreRowModel: getCoreRowModel()
   })
 
+  const deleteMutation = useDeleteQuote()
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
+  const [selectedIdsToDelete, setSelectedIdsToDelete] = React.useState<string[]>([])
+
+  const handleBulkDelete = (ids: string[]) => {
+    setSelectedIdsToDelete(ids)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDelete = async () => {
+    try {
+      await Promise.all(selectedIdsToDelete.map((id) => deleteMutation.mutateAsync(id)))
+      toast.success(`Successfully deleted ${selectedIdsToDelete.length} quotes`)
+      setRowSelection({})
+    } catch (error) {
+      toast.error('Failed to delete some quotes')
+    } finally {
+      setShowDeleteDialog(false)
+      setSelectedIdsToDelete([])
+    }
+  }
+
   return (
     <div className="space-y-4">
-      <QuotesDataTableToolbar table={table} />
+      <QuotesDataTableToolbar table={table} onDelete={handleBulkDelete} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -139,6 +174,26 @@ export function QuotesDataTable() {
         </Table>
       </div>
       <DataTablePagination table={table} />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete {selectedIdsToDelete.length} selected quote(s).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

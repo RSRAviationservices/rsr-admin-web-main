@@ -15,7 +15,6 @@ export * from "./admin";
 export * from "./analytics";
 export * from "./inventory";
 export * from "./lead";
-export * from "./license";
 export * from "./quote";
 export * from "./user";
 export * from "./career"; // Add
@@ -24,12 +23,12 @@ export * from './insight'; // Add this
 export * from './asset';
 export interface PaginatedResponse<T> {
   data: T[];
-  pagination: {
+  meta: {
     total: number;
     page: number;
     limit: number;
     totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
+    hasNext?: boolean;
+    hasPrev?: boolean;
   };
 }

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { fetchQuoteById, fetchQuotes, updateQuote } from '../services/quote.api'
+import { fetchQuoteById, fetchQuotes, updateQuote, deleteQuote } from '../services/quote.api'
 
 import type { AdminQuotesQueryDto } from '@/types/quote'
 
@@ -31,5 +31,15 @@ export const useGetQuoteById = (id: string) => {
     queryKey: QUOTE_QUERY_KEYS.quoteById(id),
     queryFn: () => fetchQuoteById(id),
     enabled: !!id
+  })
+}
+
+export const useDeleteQuote = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteQuote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quotes'] })
+    }
   })
 }

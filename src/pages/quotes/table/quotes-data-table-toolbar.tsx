@@ -1,12 +1,12 @@
 import type { Table } from '@tanstack/react-table'
-import { X, Search } from 'lucide-react'
+import { X, Search, Trash2 } from 'lucide-react'
 
 import { DataTableFacetedFilter } from '@/components/common/data-table-faceted-filter'
 import { DataTableViewOptions } from '@/components/common/data-table-view-options'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { QuoteStatus } from '@/types/quote'
-import type { QuoteRequest} from '@/types/quote';
+import type { QuoteRequest } from '@/types/quote';
 
 // Define options for the status filter dropdown
 export const quoteStatusOptions = [
@@ -18,9 +18,10 @@ export const quoteStatusOptions = [
 
 interface QuotesDataTableToolbarProps {
   table: Table<QuoteRequest>
+  onDelete?: (ids: string[]) => void
 }
 
-export function QuotesDataTableToolbar({ table }: QuotesDataTableToolbarProps) {
+export function QuotesDataTableToolbar({ table, onDelete }: QuotesDataTableToolbarProps) {
   const isFiltered = table.getState().columnFilters.length > 0 || table.getState().globalFilter
 
   return (
@@ -57,9 +58,26 @@ export function QuotesDataTableToolbar({ table }: QuotesDataTableToolbarProps) {
             <X className="ml-2 h-4 w-4" />
           </Button>
         )}
-      </div>
+        <div className="flex items-center space-x-2">
+          {table.getFilteredSelectedRowModel().rows.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="h-8"
+              onClick={() => {
+                const selectedRows = table.getFilteredSelectedRowModel().rows
+                const selectedIds = selectedRows.map((row) => row.original.id)
+                onDelete?.(selectedIds)
+              }}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete ({table.getFilteredSelectedRowModel().rows.length})
+            </Button>
+          )}
+        </div>
 
-      <DataTableViewOptions table={table} />
+        <DataTableViewOptions table={table} />
+      </div>
     </div>
   )
 }

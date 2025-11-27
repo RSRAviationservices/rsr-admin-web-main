@@ -1,6 +1,6 @@
 import apiClient from "../client";
 
-import type { PaginatedResponse } from "@/types/inventory";
+import type { PaginatedResponse } from "@/types";
 import type {
   ContactStatus,
   AdminContactsQueryDto,
@@ -21,4 +21,8 @@ export const updateLeadStatus = async ({
   status: ContactStatus;
 }): Promise<{ data: ContactSubmission }> => {
   return apiClient.patch(`/admin/contact-submissions/${id}/status`, { status });
+};
+
+export const deleteLead = async (id: string): Promise<{ message: string }> => {
+  return apiClient.delete(`/admin/contact-submissions/${id}`);
 };

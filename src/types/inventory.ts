@@ -1,16 +1,3 @@
-// --- Generic API Response Types ---
-export interface ApiMeta {
-  total: number
-  page: number
-  limit: number
-  totalPages: number
-}
-
-export interface PaginatedResponse<T> {
-  data: T[]
-  meta: ApiMeta
-}
-
 // --- Category Types ---
 export interface Category {
   id: string

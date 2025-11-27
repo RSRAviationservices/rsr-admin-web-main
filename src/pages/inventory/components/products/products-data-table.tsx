@@ -2,7 +2,8 @@ import type {
   ColumnFiltersState,
   PaginationState,
   SortingState,
-  VisibilityState} from '@tanstack/react-table';
+  VisibilityState
+} from '@tanstack/react-table';
 import {
   flexRender,
   getCoreRowModel,
@@ -14,7 +15,7 @@ import * as React from 'react'
 import { columns } from './columns-products'
 import { ProductsDataTableToolbar } from './products-data-table-toolbar'
 
-import { useGetProducts } from '@/api/queries/inventory.query'
+import { useGetProducts, useDeleteProduct } from '@/api/queries/inventory.query'
 import { DataTablePagination } from '@/components/common/data-table-pagination'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -25,7 +26,18 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useDebounce } from '@/hooks/use-debounce'
+import { toast } from 'sonner'
 
 export function ProductsDataTable() {
   const [rowSelection, setRowSelection] = React.useState({})
@@ -80,9 +92,32 @@ export function ProductsDataTable() {
     getCoreRowModel: getCoreRowModel()
   })
 
+  const deleteMutation = useDeleteProduct()
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
+  const [selectedIdsToDelete, setSelectedIdsToDelete] = React.useState<string[]>([])
+
+  const handleBulkDelete = (ids: string[]) => {
+    setSelectedIdsToDelete(ids)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDelete = async () => {
+    try {
+      // Execute all deletes in parallel
+      await Promise.all(selectedIdsToDelete.map((id) => deleteMutation.mutateAsync(id)))
+      toast.success(`Successfully deleted ${selectedIdsToDelete.length} products`)
+      setRowSelection({})
+    } catch (error) {
+      toast.error('Failed to delete some products')
+    } finally {
+      setShowDeleteDialog(false)
+      setSelectedIdsToDelete([])
+    }
+  }
+
   return (
     <div className="space-y-4 w-full h-full">
-      <ProductsDataTableToolbar table={table} />
+      <ProductsDataTableToolbar table={table} onDelete={handleBulkDelete} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -136,6 +171,26 @@ export function ProductsDataTable() {
         </Table>
       </div>
       <DataTablePagination table={table} />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete {selectedIdsToDelete.length} selected product(s).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

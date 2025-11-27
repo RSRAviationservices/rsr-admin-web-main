@@ -10,7 +10,8 @@ import {
   CardTitle
 } from '@/components/ui/card'
 import type {
-  ChartConfig} from '@/components/ui/chart';
+  ChartConfig
+} from '@/components/ui/chart';
 import {
   ChartContainer,
   ChartLegend,
@@ -67,6 +68,10 @@ export default function VisitorsChart() {
         ) : isError ? (
           <div className="h-[250px] w-full flex items-center justify-center">
             <p className="text-red-500">Failed to load chart data.</p>
+          </div>
+        ) : chartData.length === 0 ? (
+          <div className="h-[250px] w-full flex items-center justify-center">
+            <p className="text-muted-foreground">No data available for this period.</p>
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">

@@ -2,7 +2,8 @@ import type {
   ColumnFiltersState,
   PaginationState,
   SortingState,
-  VisibilityState} from '@tanstack/react-table';
+  VisibilityState
+} from '@tanstack/react-table';
 import {
   flexRender,
   getCoreRowModel,
@@ -25,6 +26,18 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
+import { useDeleteLead } from '@/api/queries/lead.query'
+import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/use-debounce'
 import type { ContactStatus } from '@/types/lead'
 
@@ -83,9 +96,31 @@ export function LeadsDataTable() {
     getCoreRowModel: getCoreRowModel()
   })
 
+  const deleteMutation = useDeleteLead()
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
+  const [selectedIdsToDelete, setSelectedIdsToDelete] = React.useState<string[]>([])
+
+  const handleBulkDelete = (ids: string[]) => {
+    setSelectedIdsToDelete(ids)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDelete = async () => {
+    try {
+      await Promise.all(selectedIdsToDelete.map((id) => deleteMutation.mutateAsync(id)))
+      toast.success(`Successfully deleted ${selectedIdsToDelete.length} leads`)
+      setRowSelection({})
+    } catch (error) {
+      toast.error('Failed to delete some leads')
+    } finally {
+      setShowDeleteDialog(false)
+      setSelectedIdsToDelete([])
+    }
+  }
+
   return (
     <div className="space-y-4">
-      <LeadsDataTableToolbar table={table} />
+      <LeadsDataTableToolbar table={table} onDelete={handleBulkDelete} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -139,6 +174,26 @@ export function LeadsDataTable() {
         </Table>
       </div>
       <DataTablePagination table={table} />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete {selectedIdsToDelete.length} selected lead(s).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

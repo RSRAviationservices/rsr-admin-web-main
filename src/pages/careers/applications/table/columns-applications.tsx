@@ -9,9 +9,12 @@ import {
   Phone,
   Calendar,
   Building,
+  Eye,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
+import { ViewApplicationModal } from "../components/ViewApplicationModal";
 
 import {
   useDeleteApplication,
@@ -109,6 +112,7 @@ const ApplicationActionsCell = ({ row }: { row: Row<Application> }) => {
   const deleteMutation = useDeleteApplication();
   const updateStatusMutation = useUpdateApplicationStatus();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   const handleStatusUpdate = (status: ApplicationStatus) => {
     const promise = updateStatusMutation.mutateAsync({
@@ -155,6 +159,10 @@ const ApplicationActionsCell = ({ row }: { row: Row<Application> }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => setShowViewModal(true)}>
+            <Eye className="mr-2 h-4 w-4" />
+            View Details
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => window.open(application.resumeUrl, "_blank")}
           >
@@ -189,6 +197,12 @@ const ApplicationActionsCell = ({ row }: { row: Row<Application> }) => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <ViewApplicationModal
+        application={application}
+        open={showViewModal}
+        onOpenChange={setShowViewModal}
+      />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

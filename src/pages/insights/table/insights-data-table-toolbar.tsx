@@ -1,5 +1,5 @@
 import type { Table } from "@tanstack/react-table";
-import { X, Search, Plus } from "lucide-react";
+import { X, Search, Plus, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { DataTableFacetedFilter } from "@/components/common/data-table-faceted-filter";
@@ -26,10 +26,12 @@ const categoryOptions = INSIGHT_CATEGORIES.map((cat) => ({
 
 interface InsightsDataTableToolbarProps {
   table: Table<Insight>;
+  onDelete?: (ids: string[]) => void;
 }
 
 export function InsightsDataTableToolbar({
   table,
+  onDelete,
 }: InsightsDataTableToolbarProps) {
   const isFiltered =
     table.getState().columnFilters.length > 0 ||
@@ -77,6 +79,21 @@ export function InsightsDataTableToolbar({
         )}
       </div>
       <div className="flex items-center space-x-2">
+        {table.getFilteredSelectedRowModel().rows.length > 0 && (
+          <Button
+            variant="destructive"
+            size="sm"
+            className="h-8"
+            onClick={() => {
+              const selectedRows = table.getFilteredSelectedRowModel().rows;
+              const selectedIds = selectedRows.map((row) => row.original.id);
+              onDelete?.(selectedIds);
+            }}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete ({table.getFilteredSelectedRowModel().rows.length})
+          </Button>
+        )}
         <Button
           variant="default"
           size="sm"
