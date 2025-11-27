@@ -1,7 +1,8 @@
 import type {
   ColumnFiltersState,
   SortingState,
-  VisibilityState} from '@tanstack/react-table';
+  VisibilityState
+} from '@tanstack/react-table';
 import {
   flexRender,
   getCoreRowModel,
@@ -24,6 +25,18 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useDeleteCategory } from '@/api/queries/inventory.query'
+import { toast } from 'sonner'
 
 export function CategoriesDataTable() {
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -32,7 +45,7 @@ export function CategoriesDataTable() {
   const [rowSelection, setRowSelection] = React.useState({})
 
   const { data: response, isLoading, isError } = useGetCategories()
-  const data = response ?? []
+  const data = response?.data ?? []
 
   const table = useReactTable({
     data,
@@ -44,14 +57,35 @@ export function CategoriesDataTable() {
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel()
+    getSortedRowModel: getSortedRowModel(),
   })
+
+  const deleteMutation = useDeleteCategory()
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
+  const [selectedIdsToDelete, setSelectedIdsToDelete] = React.useState<string[]>([])
+
+  const handleBulkDelete = (ids: string[]) => {
+    setSelectedIdsToDelete(ids)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDelete = async () => {
+    try {
+      await Promise.all(selectedIdsToDelete.map((id) => deleteMutation.mutateAsync(id)))
+      toast.success(`Successfully deleted ${selectedIdsToDelete.length} categories`)
+      setRowSelection({})
+    } catch (error) {
+      toast.error('Failed to delete some categories')
+    } finally {
+      setShowDeleteDialog(false)
+      setSelectedIdsToDelete([])
+    }
+  }
 
   return (
     <div className="space-y-4">
-      <CategoriesDataTableToolbar table={table} />
+      <CategoriesDataTableToolbar table={table} onDelete={handleBulkDelete} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -105,6 +139,26 @@ export function CategoriesDataTable() {
         </Table>
       </div>
       <DataTablePagination table={table} />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete {selectedIdsToDelete.length} selected category(s).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

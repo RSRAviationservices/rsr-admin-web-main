@@ -1,5 +1,5 @@
 import type { Table } from '@tanstack/react-table'
-import { PlusCircle, X } from 'lucide-react'
+import { PlusCircle, Trash2, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { DataTableViewOptions } from '@/components/common/data-table-view-options'
@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input'
 
 interface CategoriesToolbarProps<TData> {
   table: Table<TData>
+  onDelete?: (ids: string[]) => void
 }
 
-export function CategoriesDataTableToolbar<TData>({ table }: CategoriesToolbarProps<TData>) {
+export function CategoriesDataTableToolbar<TData>({ table, onDelete }: CategoriesToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
   const navigate = useNavigate()
   return (
@@ -34,6 +35,21 @@ export function CategoriesDataTableToolbar<TData>({ table }: CategoriesToolbarPr
         )}
       </div>
       <div className="flex items-center space-x-2">
+        {table.getFilteredSelectedRowModel().rows.length > 0 && (
+          <Button
+            variant="destructive"
+            size="sm"
+            className="h-8"
+            onClick={() => {
+              const selectedRows = table.getFilteredSelectedRowModel().rows
+              const selectedIds = selectedRows.map((row) => (row.original as any).id)
+              onDelete?.(selectedIds)
+            }}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete ({table.getFilteredSelectedRowModel().rows.length})
+          </Button>
+        )}
         <DataTableViewOptions table={table} />
         <Button
           size="sm"

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { fetchLeads, updateLeadStatus } from '../services/lead.api'
+import { fetchLeads, updateLeadStatus, deleteLead } from '../services/lead.api'
 
 import type { AdminContactsQueryDto } from '@/types/lead'
 
@@ -19,6 +19,16 @@ export const useUpdateLeadStatus = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: updateLeadStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+    }
+  })
+}
+
+export const useDeleteLead = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteLead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
     }

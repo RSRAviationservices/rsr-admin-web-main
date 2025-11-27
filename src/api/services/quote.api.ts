@@ -1,6 +1,6 @@
 import apiClient from '../client'
 
-import type { PaginatedResponse } from '@/types/inventory'
+import type { PaginatedResponse } from '@/types'
 import type { AdminQuotesQueryDto, QuoteRequest, QuoteStatus } from '@/types/quote'
 
 export const fetchQuotes = async (
@@ -21,4 +21,8 @@ export const updateQuote = async ({
 
 export const fetchQuoteById = async (id: string): Promise<{ data: QuoteRequest }> => {
   return apiClient.get(`/admin/quotes/${id}`)
+}
+
+export const deleteQuote = async (id: string): Promise<{ message: string }> => {
+  return apiClient.delete(`/admin/quotes/${id}`)
 }

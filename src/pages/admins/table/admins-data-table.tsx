@@ -24,8 +24,20 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
+import { useUpdateAdminStatus } from '@/api/queries/admin.query'
+import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/use-debounce'
-import type { AdminStatus } from '@/types/admin'
+import { AdminStatus } from '@/types/admin'
 
 export function AdminsDataTable() {
   const [rowSelection, setRowSelection] = React.useState({})
@@ -82,9 +94,39 @@ export function AdminsDataTable() {
     getCoreRowModel: getCoreRowModel()
   })
 
+  const updateStatusMutation = useUpdateAdminStatus()
+  const [showStatusDialog, setShowStatusDialog] = React.useState(false)
+  const [selectedIdsToUpdate, setSelectedIdsToUpdate] = React.useState<string[]>([])
+  const [targetStatus, setTargetStatus] = React.useState<AdminStatus>(AdminStatus.ACTIVE)
+
+  const handleBulkStatusUpdate = (ids: string[], status: AdminStatus) => {
+    setSelectedIdsToUpdate(ids)
+    setTargetStatus(status)
+    setShowStatusDialog(true)
+  }
+
+  const confirmStatusUpdate = async () => {
+    try {
+      await Promise.all(
+        selectedIdsToUpdate.map((id) =>
+          updateStatusMutation.mutateAsync({ id, status: targetStatus })
+        )
+      )
+      toast.success(
+        `Successfully marked ${selectedIdsToUpdate.length} admins as ${targetStatus}`
+      )
+      setRowSelection({})
+    } catch (error) {
+      toast.error(`Failed to update status for some admins`)
+    } finally {
+      setShowStatusDialog(false)
+      setSelectedIdsToUpdate([])
+    }
+  }
+
   return (
     <div className="space-y-4">
-      <AdminsDataTableToolbar table={table} />
+      <AdminsDataTableToolbar table={table} onUpdateStatus={handleBulkStatusUpdate} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -138,6 +180,29 @@ export function AdminsDataTable() {
         </Table>
       </div>
       <DataTablePagination table={table} />
+
+      <AlertDialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {targetStatus === AdminStatus.SUSPENDED ? 'Suspend Admins?' : 'Activate Admins?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to {targetStatus === AdminStatus.SUSPENDED ? 'suspend' : 'activate'} {selectedIdsToUpdate.length} selected admin(s)?
+              {targetStatus === AdminStatus.SUSPENDED && ' Suspended admins will not be able to log in.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmStatusUpdate}
+              className={targetStatus === AdminStatus.SUSPENDED ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+            >
+              {targetStatus === AdminStatus.SUSPENDED ? 'Suspend' : 'Activate'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
