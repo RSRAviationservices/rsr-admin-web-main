@@ -31,7 +31,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip'
-import type { User} from '@/types/user';
+import type { User } from '@/types/user';
 import { AuthProvider } from '@/types/user'
 
 
@@ -171,9 +171,9 @@ export const userColumns: ColumnDef<User>[] = [
     }
   },
   {
-    id: 'status',
+    accessorKey: 'isSuspended',
     header: 'Status',
-    cell: ({ row }) => getStatusBadge(row.original.isSuspended, row.original.isEmailVerified)
+    cell: ({ row }) => getStatusBadge(row.getValue('isSuspended'), row.original.isEmailVerified)
   },
   {
     accessorKey: 'authProvider',
