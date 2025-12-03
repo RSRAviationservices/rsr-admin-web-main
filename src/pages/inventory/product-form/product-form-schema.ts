@@ -32,8 +32,8 @@ export const productFormSchema = z.object({
   // Add images field
   images: z
     .array(z.string().url())
-    .min(1, 'At least one product image is required.')
-    .max(5, 'Maximum 5 images allowed.'),
+    .max(5, 'Maximum 5 images allowed.')
+    .optional(),
   tags: z.array(z.object({ value: z.string().min(1, 'Tag cannot be empty.') })).optional(),
   applications: z
     .array(z.object({ value: z.string().min(1, 'Application cannot be empty.') }))

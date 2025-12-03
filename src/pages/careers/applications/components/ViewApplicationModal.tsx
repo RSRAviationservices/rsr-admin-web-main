@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Download, Mail, Phone, Calendar, User, Building, MapPin } from "lucide-react";
+import { Download, Mail, Phone, Calendar, User, Building } from "lucide-react";
 import type { Application } from "@/types/application";
 import { formatDate } from "@/lib/utils";
 

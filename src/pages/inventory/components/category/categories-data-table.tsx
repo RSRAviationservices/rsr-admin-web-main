@@ -6,7 +6,7 @@ import type {
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
+
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable
