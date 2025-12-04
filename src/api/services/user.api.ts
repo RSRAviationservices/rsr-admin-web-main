@@ -1,6 +1,6 @@
 import apiClient from '../client'
 
-import type { PaginatedResponse } from '@/types/inventory'
+import type { PaginatedResponse } from '@/types'
 import type { AdminUsersQueryDto, User } from '@/types/user'
 
 export const fetchUsers = async (params: AdminUsersQueryDto): Promise<PaginatedResponse<User>> => {

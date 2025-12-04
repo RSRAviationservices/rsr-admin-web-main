@@ -40,9 +40,9 @@ export default function ProductFormPage() {
     const promise =
       mode === "edit"
         ? updateMutation.mutateAsync({
-            id: productId,
-            data: apiValues as Partial<Product>,
-          })
+          id: productId,
+          data: apiValues as Partial<Product>,
+        })
         : createMutation.mutateAsync(apiValues as Partial<Product>);
 
     toast.promise(promise, {
@@ -55,14 +55,14 @@ export default function ProductFormPage() {
     });
   };
 
-  const initialDataForForm = productResponse
+  const initialDataForForm = productResponse?.data
     ? {
-        ...productResponse,
-        images: productResponse.images || [],
-        tags: productResponse.tags?.map((value) => ({ value })) || [],
-        applications:
-          productResponse.applications?.map((value) => ({ value })) || [],
-      }
+      ...productResponse.data,
+      images: productResponse.data.images || [],
+      tags: productResponse.data.tags?.map((value) => ({ value })) || [],
+      applications:
+        productResponse.data.applications?.map((value) => ({ value })) || [],
+    }
     : undefined;
 
   const isLoading =
@@ -90,7 +90,7 @@ export default function ProductFormPage() {
               mode={mode}
               initialData={initialDataForForm}
               productId={productId}
-              allCategories={categoriesResponse || []}
+              allCategories={categoriesResponse?.data || []}
               onSubmit={handleSubmit}
               onCancel={() => navigate("/inventory")}
               isSubmitting={isSubmitting}

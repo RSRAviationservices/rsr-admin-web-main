@@ -3,9 +3,9 @@ import apiClient from "../client";
 import type {
   AdminProductsQueryDto,
   Category,
-  PaginatedResponse,
   Product,
 } from "@/types/inventory";
+import type { PaginatedResponse } from "@/types";
 
 // === Product API Service ===
 export const fetchProducts = async (
@@ -37,7 +37,7 @@ export const deleteProduct = async (id: string): Promise<{ message: string }> =>
 };
 
 // === Category API Service ===
-export const fetchCategories = async (): Promise<Category[]> => {
+export const fetchCategories = async (): Promise<{ data: Category[] }> => {
   return apiClient.get("/inventory/categories");
 };
 

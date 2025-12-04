@@ -41,11 +41,14 @@ import { type Career, CareerStatus } from "@/types/career";
 
 
 const formatDate = (date: string) => {
+  if (!date) return "N/A";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "N/A";
   return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
-  }).format(new Date(date));
+  }).format(d);
 };
 
 const getStatusBadge = (status: CareerStatus) => {

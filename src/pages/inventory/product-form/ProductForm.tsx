@@ -232,7 +232,7 @@ export function ProductForm({
                   name="images"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Images (Required)</FormLabel>
+                      <OptionalLabel>Images</OptionalLabel>
                       <FormControl>
                         <ImageUpload
                           value={field.value || []}
@@ -250,8 +250,7 @@ export function ProductForm({
                         />
                       </FormControl>
                       <FormDescription className="text-xs">
-                        Upload 1-5 product images (max 5MB each). At least one
-                        image is required.
+                        Upload up to 5 product images (max 5MB each).
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

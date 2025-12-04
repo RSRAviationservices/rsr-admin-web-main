@@ -1,5 +1,5 @@
 import type { Table } from '@tanstack/react-table'
-import { PlusCircle, X } from 'lucide-react'
+import { PlusCircle, Trash2, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { DataTableFacetedFilter } from '@/components/common/data-table-faceted-filter'
@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input'
 
 interface ProductsToolbarProps<TData> {
   table: Table<TData>
+  onDelete?: (ids: string[]) => void
 }
 
-export function ProductsDataTableToolbar<TData>({ table }: ProductsToolbarProps<TData>) {
+export function ProductsDataTableToolbar<TData>({ table, onDelete }: ProductsToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
   const navigate = useNavigate()
 
@@ -48,6 +49,21 @@ export function ProductsDataTableToolbar<TData>({ table }: ProductsToolbarProps<
         )}
       </div>
       <div className="flex items-center space-x-2">
+        {table.getFilteredSelectedRowModel().rows.length > 0 && (
+          <Button
+            variant="destructive"
+            size="sm"
+            className="h-8"
+            onClick={() => {
+              const selectedRows = table.getFilteredSelectedRowModel().rows
+              const selectedIds = selectedRows.map((row) => (row.original as any).id)
+              onDelete?.(selectedIds)
+            }}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete ({table.getFilteredSelectedRowModel().rows.length})
+          </Button>
+        )}
         <DataTableViewOptions table={table} />
         <Button
           size="sm"

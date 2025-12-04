@@ -58,11 +58,11 @@ export default function CategoryFormPage() {
       ? "Update the details of an existing product category."
       : "Fill out the form to add a new category to your inventory.";
 
-  const initialDataForForm = categoryResponse
+  const initialDataForForm = categoryResponse?.data
     ? {
-        ...categoryResponse,
-        image: categoryResponse.image ?? "",
-      }
+      ...categoryResponse.data,
+      image: categoryResponse.data.image ?? "",
+    }
     : undefined;
 
   const breadcrumbItems = [{ label: "Inventory", href: "/inventory" }];
