@@ -14,11 +14,11 @@ export const fetchProducts = async (
   return apiClient.get("/inventory/products", { params });
 };
 
-export const fetchProductById = async (id: string): Promise<Product> => {
+export const fetchProductById = async (id: string): Promise<{ data: Product }> => {
   return apiClient.get(`/inventory/products/${id}`);
 };
 
-export const createProduct = async (data: Partial<Product>): Promise<Product> => {
+export const createProduct = async (data: Partial<Product>): Promise<{ data: Product; message: string }> => {
   return apiClient.post("/inventory/products", data);
 };
 
@@ -28,7 +28,7 @@ export const updateProduct = async ({
 }: {
   id: string;
   data: Partial<Product>;
-}): Promise<Product> => {
+}): Promise<{ data: Product; message: string }> => {
   return apiClient.patch(`/inventory/products/${id}`, data);
 };
 
@@ -41,11 +41,11 @@ export const fetchCategories = async (): Promise<{ data: Category[] }> => {
   return apiClient.get("/inventory/categories");
 };
 
-export const fetchCategoryById = async (id: string): Promise<Category> => {
+export const fetchCategoryById = async (id: string): Promise<{ data: Category }> => {
   return apiClient.get(`/inventory/categories/${id}`);
 };
 
-export const createCategory = async (data: Partial<Category>): Promise<Category> => {
+export const createCategory = async (data: Partial<Category>): Promise<{ data: Category; message: string }> => {
   return apiClient.post("/inventory/categories", data);
 };
 
@@ -55,7 +55,7 @@ export const updateCategory = async ({
 }: {
   id: string;
   data: Partial<Category>;
-}): Promise<Category> => {
+}): Promise<{ data: Category; message: string }> => {
   return apiClient.patch(`/inventory/categories/${id}`, data);
 };
 
