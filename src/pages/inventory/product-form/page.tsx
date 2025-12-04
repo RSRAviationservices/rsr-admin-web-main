@@ -55,14 +55,16 @@ export default function ProductFormPage() {
     });
   };
 
-  const initialDataForForm = productResponse?.data
+  const initialDataForForm = productResponse
     ? {
-      ...productResponse.data,
-      images: productResponse.data.images || [],
-      tags: productResponse.data.tags?.map((value) => ({ value })) || [],
-      applications:
-        productResponse.data.applications?.map((value) => ({ value })) || [],
-    }
+        ...productResponse,
+        images: productResponse.images || [],
+        tags:
+          productResponse.tags?.map((value: string) => ({ value })) || [],
+        applications:
+          productResponse.applications?.map((value: string) => ({ value })) ||
+          [],
+      }
     : undefined;
 
   const isLoading =
