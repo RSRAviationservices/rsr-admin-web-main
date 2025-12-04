@@ -15,7 +15,6 @@ import CategoryFormPage from "@/pages/inventory/category-form/page";
 import InventoryPage from "@/pages/inventory/page";
 import ProductFormPage from "@/pages/inventory/product-form/page";
 import LeadsPage from "@/pages/leads/page";
-// import LicensePage from '@/pages/licenses/page'
 import QuoteDetailsPage from "@/pages/quotes/details/page";
 import QuotesPage from "@/pages/quotes/page";
 import UsersPage from "@/pages/users/page";
@@ -32,7 +31,6 @@ export default function AppRoutes() {
         <Route element={<AdminLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
-          {/* <Route path="/license-details" element={<LicensePage />} /> */}
           <Route path="/inventory" element={<InventoryPage />} />
           <Route
             path="/inventory/category-form"
@@ -44,7 +42,7 @@ export default function AppRoutes() {
           <Route path="/leads" element={<LeadsPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/admins" element={<AdminsPage />} />
-           <Route path="/admins/form" element={<AdminFormPage />} />
+          <Route path="/admins/form" element={<AdminFormPage />} />
           <Route path="/careers" element={<CareersPage />} />
           <Route path="/careers/form" element={<CareerFormPage />} />
           <Route path="/careers/applications" element={<ApplicationsPage />} />

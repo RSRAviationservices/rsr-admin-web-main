@@ -2,7 +2,8 @@ import type {
   ColumnFiltersState,
   PaginationState,
   SortingState,
-  VisibilityState} from '@tanstack/react-table';
+  VisibilityState
+} from '@tanstack/react-table';
 import {
   flexRender,
   getCoreRowModel,
@@ -25,6 +26,18 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
+import { useUpdateUserSuspension } from '@/api/queries/user.query'
+import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/use-debounce'
 import type { AuthProvider } from '@/types/user'
 
@@ -87,6 +100,36 @@ export function UsersDataTable() {
     getCoreRowModel: getCoreRowModel()
   })
 
+  const suspendMutation = useUpdateUserSuspension()
+  const [showSuspendDialog, setShowSuspendDialog] = React.useState(false)
+  const [selectedIdsToSuspend, setSelectedIdsToSuspend] = React.useState<string[]>([])
+  const [isSuspending, setIsSuspending] = React.useState(true) // true = suspend, false = unsuspend
+
+  const handleBulkSuspend = (ids: string[], suspend: boolean) => {
+    setSelectedIdsToSuspend(ids)
+    setIsSuspending(suspend)
+    setShowSuspendDialog(true)
+  }
+
+  const confirmSuspend = async () => {
+    try {
+      await Promise.all(
+        selectedIdsToSuspend.map((id) =>
+          suspendMutation.mutateAsync({ id, isSuspended: isSuspending })
+        )
+      )
+      toast.success(
+        `Successfully ${isSuspending ? 'suspended' : 'unsuspended'} ${selectedIdsToSuspend.length} users`
+      )
+      setRowSelection({})
+    } catch (error) {
+      toast.error(`Failed to ${isSuspending ? 'suspend' : 'unsuspend'} some users`)
+    } finally {
+      setShowSuspendDialog(false)
+      setSelectedIdsToSuspend([])
+    }
+  }
+
   // Add a filter accessor for isSuspended to make the filter work
   React.useEffect(() => {
     table.getColumn('isSuspended')?.setFilterValue(isSuspendedFilter)
@@ -94,7 +137,7 @@ export function UsersDataTable() {
 
   return (
     <div className="space-y-4">
-      <UsersDataTableToolbar table={table} />
+      <UsersDataTableToolbar table={table} onSuspend={handleBulkSuspend} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -148,6 +191,29 @@ export function UsersDataTable() {
         </Table>
       </div>
       <DataTablePagination table={table} />
+
+      <AlertDialog open={showSuspendDialog} onOpenChange={setShowSuspendDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isSuspending ? 'Suspend Users?' : 'Unsuspend Users?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to {isSuspending ? 'suspend' : 'unsuspend'} {selectedIdsToSuspend.length} selected user(s)?
+              {isSuspending && ' Suspended users will not be able to log in.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmSuspend}
+              className={isSuspending ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+            >
+              {isSuspending ? 'Suspend' : 'Unsuspend'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

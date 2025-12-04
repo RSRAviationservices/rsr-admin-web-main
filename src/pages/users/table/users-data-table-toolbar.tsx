@@ -1,12 +1,12 @@
 import type { Table } from '@tanstack/react-table'
-import { X, Search } from 'lucide-react'
+import { X, Search, Ban } from 'lucide-react'
 
 import { DataTableFacetedFilter } from '@/components/common/data-table-faceted-filter'
 import { DataTableViewOptions } from '@/components/common/data-table-view-options'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AuthProvider } from '@/types/user'
-import type { User} from '@/types/user';
+import type { User } from '@/types/user';
 
 const statusOptions = [
   { value: false, label: 'Active' },
@@ -20,9 +20,10 @@ const authProviderOptions = [
 
 interface UsersDataTableToolbarProps {
   table: Table<User>
+  onSuspend?: (ids: string[], suspend: boolean) => void
 }
 
-export function UsersDataTableToolbar({ table }: UsersDataTableToolbarProps) {
+export function UsersDataTableToolbar({ table, onSuspend }: UsersDataTableToolbarProps) {
   const isFiltered = table.getState().columnFilters.length > 0 || !!table.getState().globalFilter
 
   return (
@@ -67,6 +68,37 @@ export function UsersDataTableToolbar({ table }: UsersDataTableToolbarProps) {
             <X className="ml-2 h-4 w-4" />
           </Button>
         )}
+        <div className="flex items-center space-x-2">
+          {table.getFilteredSelectedRowModel().rows.length > 0 && (
+            <>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8"
+                onClick={() => {
+                  const selectedRows = table.getFilteredSelectedRowModel().rows
+                  const selectedIds = selectedRows.map((row) => row.original.id)
+                  onSuspend?.(selectedIds, true)
+                }}
+              >
+                <Ban className="mr-2 h-4 w-4" />
+                Suspend ({table.getFilteredSelectedRowModel().rows.length})
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={() => {
+                  const selectedRows = table.getFilteredSelectedRowModel().rows
+                  const selectedIds = selectedRows.map((row) => row.original.id)
+                  onSuspend?.(selectedIds, false)
+                }}
+              >
+                Unsuspend
+              </Button>
+            </>
+          )}
+        </div>
       </div>
       <DataTableViewOptions table={table} />
     </div>

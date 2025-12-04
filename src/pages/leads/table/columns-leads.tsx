@@ -30,7 +30,7 @@ import {
   TooltipTrigger,
   TooltipContent
 } from '@/components/ui/tooltip'
-import type { ContactSubmission} from '@/types/lead';
+import type { ContactSubmission } from '@/types/lead';
 import { ContactStatus } from '@/types/lead'
 
 
@@ -70,9 +70,13 @@ const getStatusBadge = (status: ContactStatus) => {
   }
 }
 
+import { useState } from "react";
+import { ViewMessageModal } from "../components/ViewMessageModal";
+
 const LeadActionsCell = ({ row }: { row: Row<ContactSubmission> }) => {
   const lead = row.original
   const updateStatusMutation = useUpdateLeadStatus()
+  const [showViewModal, setShowViewModal] = useState(false)
 
   const handleStatusUpdate = (status: ContactStatus) => {
     const promise = updateStatusMutation.mutateAsync({ id: lead.id, status })
@@ -84,30 +88,42 @@ const LeadActionsCell = ({ row }: { row: Row<ContactSubmission> }) => {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => handleStatusUpdate(ContactStatus.CONTACTED)}>
-          Mark as Contacted
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className="text-red-600"
-          onClick={() => handleStatusUpdate(ContactStatus.SPAM)}
-        >
-          Mark as Spam
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => window.open(`mailto:${lead.email}`, '_blank')}>
-          Send Email
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => setShowViewModal(true)}>
+            <MessageSquare className="mr-2 h-4 w-4" />
+            View Message
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleStatusUpdate(ContactStatus.CONTACTED)}>
+            Mark as Contacted
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-red-600"
+            onClick={() => handleStatusUpdate(ContactStatus.SPAM)}
+          >
+            Mark as Spam
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => window.open(`mailto:${lead.email}`, '_blank')}>
+            Send Email
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <ViewMessageModal
+        lead={lead}
+        open={showViewModal}
+        onOpenChange={setShowViewModal}
+      />
+    </>
   )
 }
 

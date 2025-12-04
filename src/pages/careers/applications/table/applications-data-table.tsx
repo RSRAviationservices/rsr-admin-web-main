@@ -24,6 +24,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useDeleteApplication } from "@/api/queries/application.query";
+import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { ApplicationStatus } from "@/types/application";
 import type { CareerDepartment } from "@/types/career";
@@ -73,7 +85,7 @@ export function ApplicationsDataTable() {
 
   const { data: response, isLoading, isError } = useApplications(queryParams);
   const data = response?.data ?? [];
-  const pageCount = response?.pagination?.totalPages ?? 0;
+  const pageCount = response?.meta?.totalPages ?? 0;
 
   const table = useReactTable({
     data,
@@ -101,9 +113,31 @@ export function ApplicationsDataTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const deleteMutation = useDeleteApplication();
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [selectedIdsToDelete, setSelectedIdsToDelete] = React.useState<string[]>([]);
+
+  const handleBulkDelete = (ids: string[]) => {
+    setSelectedIdsToDelete(ids);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await Promise.all(selectedIdsToDelete.map((id) => deleteMutation.mutateAsync(id)));
+      toast.success(`Successfully deleted ${selectedIdsToDelete.length} applications`);
+      setRowSelection({});
+    } catch (error) {
+      toast.error("Failed to delete some applications");
+    } finally {
+      setShowDeleteDialog(false);
+      setSelectedIdsToDelete([]);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <ApplicationsDataTableToolbar table={table} />
+      <ApplicationsDataTableToolbar table={table} onDelete={handleBulkDelete} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -114,9 +148,9 @@ export function ApplicationsDataTable() {
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -172,6 +206,26 @@ export function ApplicationsDataTable() {
         </Table>
       </div>
       <DataTablePagination table={table} />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete {selectedIdsToDelete.length} selected application(s).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

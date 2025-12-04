@@ -196,7 +196,7 @@ export default function QuoteDetailsPage() {
             {/* Items Table */}
             <div>
               <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-4">
-                Quoted Items ({quote.items.length})
+                Quoted Items ({(quote.items || []).length})
               </h3>
               <div className="border rounded-lg">
                 <Table>
@@ -208,7 +208,7 @@ export default function QuoteDetailsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {quote.items.map((item, index) => (
+                    {(quote.items || []).map((item, index) => (
                       <TableRow key={index}>
                         <TableCell>
                           <div className="font-medium">{item.product.name}</div>

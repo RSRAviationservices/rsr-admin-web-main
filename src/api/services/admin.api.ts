@@ -7,7 +7,7 @@ import type {
   Permission,
   PermissionDefinition,
 } from "@/types/admin";
-import type { PaginatedResponse } from "@/types/inventory";
+import type { PaginatedResponse } from "@/types";
 
 export const fetchAdmins = async (
   params: AdminAdminsQueryDto
