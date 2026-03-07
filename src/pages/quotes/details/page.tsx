@@ -8,8 +8,10 @@ import {
   Mail,
   Phone,
   Edit,
-  ChevronDown
+  ChevronDown,
+  MessageSquare
 } from 'lucide-react'
+import * as React from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -24,6 +26,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -73,8 +85,16 @@ export default function QuoteDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const { data: response, isLoading, isError } = useGetQuoteById(id || '')
   const updateQuoteMutation = useUpdateQuote()
+  const [adminNotes, setAdminNotes] = React.useState('')
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
 
   const quote = response?.data
+
+  React.useEffect(() => {
+    if (quote?.adminNotes) {
+      setAdminNotes(quote.adminNotes)
+    }
+  }, [quote])
 
   const handleStatusUpdate = (status: QuoteStatus) => {
     if (!quote) return
@@ -84,6 +104,17 @@ export default function QuoteDetailsPage() {
       success: `Quote #${quote.quoteNumber} marked as ${status}.`,
       error: (err) => `Error: ${err.message}`
     })
+  }
+
+  const handleNotesUpdate = async () => {
+    if (!quote) return
+    try {
+      await updateQuoteMutation.mutateAsync({ id: quote.id, data: { adminNotes } })
+      toast.success('Admin notes updated successfully.')
+      setIsDialogOpen(false)
+    } catch (err: any) {
+      toast.error(`Failed to update notes: ${err.message}`)
+    }
   }
 
   if (isLoading) {
@@ -137,29 +168,63 @@ export default function QuoteDetailsPage() {
                   </Badge>
                 </div>
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Update Status
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleStatusUpdate(QuoteStatus.APPROVED)}>
-                    Approve
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStatusUpdate(QuoteStatus.FULFILLED)}>
-                    Fulfill
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-red-500"
-                    onClick={() => handleStatusUpdate(QuoteStatus.REJECTED)}
-                  >
-                    Reject
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex gap-2">
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Admin Notes
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Edit Admin Notes</DialogTitle>
+                      <DialogDescription>
+                        Update internal notes for Quote #{quote.quoteNumber}. These notes are only
+                        visible to other admins.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      placeholder="Enter internal notes..."
+                      className="min-h-[150px]"
+                    />
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleNotesUpdate} disabled={updateQuoteMutation.isPending}>
+                        Save Changes
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <Edit className="mr-2 h-4 w-4" />
+                      Update Status
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleStatusUpdate(QuoteStatus.APPROVED)}>
+                      Approve
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleStatusUpdate(QuoteStatus.FULFILLED)}>
+                      Fulfill
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-500"
+                      onClick={() => handleStatusUpdate(QuoteStatus.REJECTED)}
+                    >
+                      Reject
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
 
             <Separator />
@@ -186,7 +251,9 @@ export default function QuoteDetailsPage() {
                 </div>
               </div>
               <div className="space-y-4">
-                <h3 className="font-semibold text-slate-700 dark:text-slate-200">Admin Notes</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-slate-700 dark:text-slate-200">Admin Notes</h3>
+                </div>
                 <p className="text-sm text-muted-foreground p-3 bg-slate-50 dark:bg-slate-800/50 rounded-md min-h-[80px]">
                   {quote.adminNotes || 'No admin notes for this quote.'}
                 </p>

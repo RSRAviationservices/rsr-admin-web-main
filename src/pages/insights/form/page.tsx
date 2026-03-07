@@ -1,4 +1,4 @@
-import { ArrowLeft, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Eye, Layout, Settings, Search, Clock, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -30,13 +30,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageUpload } from "@/components/common/ImageUpload";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import PageLayout from "@/layouts/PageLayout";
 import { InsightStatus, INSIGHT_CATEGORIES } from "@/types/insight";
 import { AssetContext } from "@/types/asset";
+import { cn } from "@/lib/utils";
 
 export default function InsightFormPage() {
   const [searchParams] = useSearchParams();
@@ -87,79 +91,68 @@ export default function InsightFormPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log("🔍 Form submission triggered");
-    console.log("📋 Form Data:", formData);
-
     clearAllErrors();
 
     const isValid = validateForm();
-    console.log("✅ Validation result:", isValid);
-    console.log("❌ Errors:", useInsightFormStore.getState().errors);
-
     if (!isValid) {
-      toast.error("Please fix the errors in the form");
+      toast.error("Form Validation Failed", {
+        description: "Please check the settings sidebar for errors."
+      });
       return;
     }
 
-    setIsSubmitting(true);
+    const cleanedData = {
+      ...formData,
+      tags: formData.tags?.filter((tag) => tag.trim()) || [],
+    };
 
-    try {
-      const cleanedData = {
-        ...formData,
-        tags: formData.tags?.filter((tag) => tag.trim()) || [],
-      };
+    const promise = mode === "create" 
+      ? createMutation.mutateAsync(cleanedData as any)
+      : updateMutation.mutateAsync({ id: insightId!, data: cleanedData as any });
 
-      console.log("📤 Submitting cleaned data:", cleanedData);
-
-      if (mode === "create") {
-        const result = await createMutation.mutateAsync(cleanedData as any);
-        console.log("✅ Create success:", result);
-        toast.success("Insight created successfully");
+    toast.promise(promise, {
+      loading: mode === "create" ? "Publishing insight..." : "Saving changes...",
+      success: () => {
         navigate("/insights");
-      } else if (mode === "edit" && insightId) {
-        const result = await updateMutation.mutateAsync({
-          id: insightId,
-          data: cleanedData as any,
-        });
-        console.log("✅ Update success:", result);
-        toast.success("Insight updated successfully");
-        navigate("/insights");
+        return mode === "create" ? "Insight published successfully!" : "Insight updated successfully!";
+      },
+      error: (err) => {
+        return err.response?.data?.error?.message || err.message || "Failed to save insight";
       }
-    } catch (error: any) {
-      console.error("❌ Submission error:", error);
-      console.error("Error response:", error.response);
-      const errorMessage =
-        error.response?.data?.error?.message ||
-        error.response?.data?.message ||
-        "Failed to save insight";
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
   const handleDelete = async () => {
     if (!insightId) return;
 
-    try {
-      await deleteMutation.mutateAsync(insightId);
-      toast.success("Insight deleted successfully");
-      navigate("/insights");
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.error?.message || "Failed to delete insight"
-      );
-    }
+    const promise = deleteMutation.mutateAsync(insightId);
+
+    toast.promise(promise, {
+      loading: "Deleting insight...",
+      success: () => {
+        navigate("/insights");
+        return "Insight deleted forever.";
+      },
+      error: (err) => err.response?.data?.error?.message || "Failed to delete insight"
+    });
+    
     setShowDeleteDialog(false);
   };
 
   if (mode === "edit" && isLoadingInsight) {
     return (
       <PageLayout>
-        <div className="p-6 space-y-6">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-96 w-full" />
+        <div className="flex h-screen bg-stone-50">
+          <div className="w-[30%] border-r bg-white p-6 space-y-6">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+          <div className="flex-1 p-12 space-y-8">
+            <Skeleton className="h-16 w-3/4" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-[500px] w-full" />
+          </div>
         </div>
       </PageLayout>
     );
@@ -175,246 +168,243 @@ export default function InsightFormPage() {
     label: status.charAt(0).toUpperCase() + status.slice(1),
   }));
 
-  const isFormValid =
-    formData.title &&
-    formData.excerpt &&
-    formData.content &&
-    ((Array.isArray(formData.content) && formData.content.length > 0) ||
-      (typeof formData.content === "object" &&
-        Object.keys(formData.content).length > 0)) &&
+  const isFormValid = !!(
+    formData.title?.trim() &&
+    formData.excerpt?.trim() &&
     formData.coverImage &&
     formData.categoryId &&
-    formData.tags &&
-    formData.tags.length > 0 &&
-    formData.status;
+    formData.status
+  );
 
   return (
-    <PageLayout className="h-screen">
-      <form onSubmit={handleSubmit} className="space-y-5 bg-stone-100">
-        {/* Header */}
-        <div className="w-full flex items-center justify-between px-5 py-4 bg-white border-b sticky top-0 z-10">
+    <PageLayout className="flex flex-col h-screen overflow-hidden bg-white">
+      <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        {/* Simplified and Clean Header */}
+        <header className="w-full flex items-center justify-between px-6 py-3 bg-white border-b shrink-0 z-20">
           <div className="flex items-center space-x-4">
             <Button
               type="button"
               variant="outline"
               size="icon"
               onClick={() => navigate("/insights")}
+              className="h-8 w-8 rounded-md"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-lg font-bold text-gray-900 leading-none">
                 {mode === "create" ? "Create New Insight" : "Edit Insight"}
               </h1>
-              <p className="text-sm text-gray-500">
-                {mode === "create"
-                  ? "Write and publish a new blog post"
-                  : "Update blog post"}
+              <p className="text-xs text-gray-500 mt-1">
+                {mode === "create" ? "Drafting new content" : `Status: ${formData.status}`}
               </p>
             </div>
           </div>
+
           <div className="flex items-center space-x-2">
             {mode === "edit" && (
               <Button
                 type="button"
-                variant="destructive"
+                variant="ghost"
                 size="sm"
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 h-8"
                 onClick={() => setShowDeleteDialog(true)}
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="h-3.5 w-3.5 mr-2" />
                 Delete
               </Button>
             )}
             <Button
               type="submit"
-              size="sm"
               disabled={isSubmitting || !isFormValid}
+              size="sm"
+              className="h-8 px-4"
             >
-              <Save className="h-4 w-4 mr-2" />
-              {isSubmitting ? "Saving..." : "Save Insight"}
+              {isSubmitting ? (
+                <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5 mr-2" />
+              )}
+              {mode === "create" ? "Publish Insight" : "Save Changes"}
             </Button>
           </div>
-        </div>
+        </header>
 
-        {/* Form Content */}
-        <div className="flex flex-col items-center px-6">
-          <div className="w-full max-w-3xl space-y-5">
-            {/* Basic Information */}
-            <Card className="shadow-none">
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField label="Title" required error={errors.title}>
-                  <TextInput
+        {/* Interface Content */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Settings Sidebar (30%) - Minimal Style */}
+          <aside className="w-[30%] min-w-[320px] max-w-[380px] border-r bg-stone-50/50 overflow-y-auto no-scrollbar shrink-0">
+            <div className="p-6 space-y-8">
+              <Tabs defaultValue="settings" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="settings" className="text-xs font-semibold">Settings</TabsTrigger>
+                  <TabsTrigger value="seo" className="text-xs font-semibold">SEO</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="settings" className="space-y-6 mt-0">
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="text-[11px] font-bold text-stone-400 uppercase tracking-widest px-1">Classification</h3>
+                      <div className="space-y-4 bg-white p-4 rounded-lg border border-stone-200 shadow-sm">
+                        <FormField label="Category" required error={errors.categoryId}>
+                          <SelectInput
+                            value={formData.categoryId}
+                            onChange={(value) => {
+                              const category = INSIGHT_CATEGORIES.find((c) => c.id === value);
+                              setField("categoryId", value);
+                              if (category) setField("categoryName" as any, category.name);
+                            }}
+                            options={categoryOptions}
+                            placeholder="Select category"
+                          />
+                        </FormField>
+
+                        <FormField label="Status" required error={errors.status}>
+                          <SelectInput
+                            value={formData.status}
+                            onChange={(value) => {
+                              setField("status", value);
+                              if (value === InsightStatus.PUBLISHED && !formData.publishedAt) {
+                                setField("publishedAt", new Date().toISOString());
+                              }
+                            }}
+                            options={statusOptions}
+                            placeholder="Select status"
+                          />
+                        </FormField>
+
+                        <FormField label="Read Time (min)" required error={errors.readTime}>
+                          <div className="relative">
+                            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-stone-400" />
+                            <Input
+                              type="number"
+                              min="1"
+                              className="pl-9 h-9"
+                              value={formData.readTime || ""}
+                              onChange={(e) => setField("readTime", parseInt(e.target.value) || 1)}
+                            />
+                          </div>
+                        </FormField>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-[11px] font-bold text-stone-400 uppercase tracking-widest px-1">Featured Media</h3>
+                      <div className="space-y-4 bg-white p-4 rounded-lg border border-stone-200 shadow-sm">
+                        <FormField
+                          label="Cover Image"
+                          required
+                          error={errors.coverImage}
+                        >
+                          <ImageUpload
+                            value={formData.coverImage || ""}
+                            onChange={(value) => setField("coverImage", value)}
+                            context={AssetContext.BLOGS}
+                            contextId={insightId || undefined}
+                            multiple={false}
+                            maxSize={5}
+                            gridSize={240}
+                            disabled={isSubmitting}
+                            layout="cover"
+                            className="rounded-md border-stone-200"
+                          />
+                        </FormField>
+
+                        <FormField label="Tags" required error={errors.tags}>
+                          <TagsInput
+                            tags={formData.tags || []}
+                            onChange={setTags}
+                            error={errors.tags}
+                          />
+                        </FormField>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="seo" className="space-y-6 mt-0">
+                  <div className="bg-white p-5 rounded-lg border border-stone-200 space-y-5 shadow-sm">
+                    <FormField label="URL Slug" error={errors.slug}>
+                      <TextInput
+                        value={formData.slug || ""}
+                        onChange={(value) => setField("slug", value)}
+                        placeholder="url-identifier"
+                        className="font-mono text-xs h-9"
+                      />
+                    </FormField>
+
+                    <FormField label="Meta Title">
+                      <TextInput
+                        value={formData.metaTitle || ""}
+                        onChange={(value) => setField("metaTitle", value)}
+                        placeholder="Search engine title"
+                        className="h-9"
+                      />
+                    </FormField>
+
+                    <FormField label="Meta Description">
+                      <TextAreaInput
+                        value={formData.metaDescription || ""}
+                        onChange={(value) => setField("metaDescription", value)}
+                        placeholder="Search engine summary"
+                        rows={4}
+                      />
+                    </FormField>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </aside>
+
+          {/* Main Content Area (70%) */}
+          <div className="flex-1 bg-white overflow-y-auto custom-scrollbar relative">
+            <div className="max-w-3xl mx-auto py-16 px-10 space-y-10">
+              {/* Title Section */}
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <textarea
+                    className="w-full bg-transparent border-none focus:ring-0 text-4xl font-bold text-gray-900 placeholder:text-stone-200 resize-none leading-tight overflow-hidden p-0"
+                    placeholder="Insight Title..."
                     value={formData.title || ""}
-                    onChange={(value) => setField("title", value)}
-                    placeholder="e.g., The Future of Aviation Maintenance"
+                    onChange={(e) => {
+                      setField("title", e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = `${e.target.scrollHeight}px`;
+                    }}
+                    rows={1}
+                    autoFocus
                   />
-                </FormField>
-
-                <FormField
-                  label="Slug"
-                  error={errors.slug}
-                  description="Leave empty to auto-generate from title"
-                >
-                  <TextInput
-                    value={formData.slug || ""}
-                    onChange={(value) => setField("slug", value)}
-                    placeholder="e.g., future-of-aviation-maintenance"
-                  />
-                </FormField>
-
-                <FormField label="Excerpt" required error={errors.excerpt}>
-                  <TextAreaInput
-                    value={formData.excerpt || ""}
-                    onChange={(value) => setField("excerpt", value)}
-                    placeholder="Brief summary of the post (20-500 characters)"
-                    rows={3}
-                    maxLength={500}
-                  />
-                </FormField>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    label="Category"
-                    required
-                    error={errors.categoryId}
-                  >
-                    <SelectInput
-                      value={formData.categoryId}
-                      onChange={(value) => {
-                        const category = INSIGHT_CATEGORIES.find(
-                          (c) => c.id === value
-                        );
-                        setField("categoryId", value);
-                        if (category) {
-                          setField("categoryName" as any, category.name);
-                        }
-                      }}
-                      options={categoryOptions}
-                      placeholder="Select category"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Read Time (minutes)"
-                    required
-                    error={errors.readTime}
-                  >
-                    <Input
-                      type="number"
-                      min="1"
-                      value={formData.readTime || ""}
-                      onChange={(e) =>
-                        setField("readTime", parseInt(e.target.value) || 1)
-                      }
-                      placeholder="5"
-                    />
-                  </FormField>
+                  {errors.title && <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">{errors.title}</p>}
                 </div>
 
-                {/* Cover Image Upload - UPDATED */}
-                <FormField
-                  label="Cover Image"
-                  required
-                  error={errors.coverImage}
-                  description="Upload a cover image for the blog post (max 5MB)"
-                >
-                  <ImageUpload
-                    value={formData.coverImage || ""}
-                    onChange={(value) => {
-                      // value is a string (single image URL)
-                      setField("coverImage", value);
+                <div className="space-y-2">
+                  <textarea
+                    className="w-full bg-transparent border-none focus:ring-0 text-lg text-stone-500 placeholder:text-stone-200 resize-none leading-relaxed overflow-hidden p-0"
+                    placeholder="Write a short summary..."
+                    value={formData.excerpt || ""}
+                    onChange={(e) => {
+                      setField("excerpt", e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = `${e.target.scrollHeight}px`;
                     }}
-                    context={AssetContext.BLOGS}
-                    contextId={insightId || undefined}
-                    multiple={false}
-                    maxSize={5}
-                    gridSize={300} // Larger size for cover image
-                    disabled={isSubmitting}
-                    className="w-full" // Full width
-                    layout="cover"
+                    rows={1}
                   />
-                </FormField>
+                  {errors.excerpt && <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">{errors.excerpt}</p>}
+                </div>
+              </div>
 
-                <FormField label="Tags" required error={errors.tags}>
-                  <TagsInput
-                    tags={formData.tags || []}
-                    onChange={setTags}
-                    error={errors.tags}
-                  />
-                </FormField>
+              <Separator className="bg-stone-100" />
 
-                <FormField label="Status" required error={errors.status}>
-                  <SelectInput
-                    value={formData.status}
-                    onChange={(value) => {
-                      setField("status", value);
-                      if (
-                        value === InsightStatus.PUBLISHED &&
-                        !formData.publishedAt
-                      ) {
-                        setField("publishedAt", new Date().toISOString());
-                      }
-                    }}
-                    options={statusOptions}
-                    placeholder="Select status"
-                  />
-                </FormField>
-              </CardContent>
-            </Card>
-
-            {/* Content Editor */}
-            <Card className="shadow-none w-full">
-              <CardHeader>
-                <CardTitle>Content</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FormField label="Blog Content" required error={errors.content}>
-                  <BlockNoteEditorComponent
-                    content={formData.content || {}}
-                    onChange={setContent}
-                    error={errors.content}
-                  />
-                </FormField>
-              </CardContent>
-            </Card>
-
-            {/* SEO */}
-            <Card className="w-full shadow-none">
-              <CardHeader>
-                <CardTitle>SEO (Optional)</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField label="Meta Title">
-                  <TextInput
-                    value={formData.metaTitle || ""}
-                    onChange={(value) => setField("metaTitle", value)}
-                    placeholder="Title for search engines"
-                  />
-                </FormField>
-
-                <FormField label="Meta Description">
-                  <TextAreaInput
-                    value={formData.metaDescription || ""}
-                    onChange={(value) => setField("metaDescription", value)}
-                    placeholder="Brief description for search engines"
-                    rows={2}
-                  />
-                </FormField>
-
-                <FormField label="OG Image URL">
-                  <TextInput
-                    value={formData.ogImage || ""}
-                    onChange={(value) => setField("ogImage", value)}
-                    placeholder="https://example.com/og-image.jpg"
-                  />
-                </FormField>
-              </CardContent>
-            </Card>
+              {/* Editor Section */}
+              <div className="pb-32">
+                <BlockNoteEditorComponent
+                  content={formData.content || {}}
+                  onChange={setContent}
+                  error={errors.content}
+                />
+              </div>
+            </div>
           </div>
-          <div className="h-32" />
         </div>
       </form>
 
@@ -422,17 +412,16 @@ export default function InsightFormPage() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Insight?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              insight.
+              Are you sure you want to delete this insight? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               Delete
             </AlertDialogAction>
@@ -442,3 +431,26 @@ export default function InsightFormPage() {
     </PageLayout>
   );
 }
+
+const Loader2 = ({ className }: { className?: string }) => (
+  <svg
+    className={cn("animate-spin", className)}
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="4"
+    ></circle>
+    <path
+      className="opacity-75"
+      fill="currentColor"
+      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+    ></path>
+  </svg>
+);

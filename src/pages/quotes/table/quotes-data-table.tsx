@@ -62,7 +62,7 @@ export function QuotesDataTable() {
       page: pageIndex + 1,
       limit: pageSize,
       search: debouncedSearch,
-      status: statusFilter?.[0] // Assuming single status filter for now
+      status: statusFilter && statusFilter.length > 0 ? statusFilter.join(',') : undefined
     }
   }, [pageIndex, pageSize, debouncedSearch, statusFilter])
 
