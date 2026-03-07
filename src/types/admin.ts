@@ -24,6 +24,9 @@ export interface PermissionDefinition {
 export interface Admin {
   id: string;
   username: string;
+  fullName: string;
+  email?: string;
+  department?: string;
   role: AdminRole;
   status: AdminStatus;
   permissions?: Permission[];
@@ -46,6 +49,9 @@ export interface AdminAdminsQueryDto {
 // Form data type
 export interface AdminFormData {
   username: string;
+  fullName: string;
+  email?: string;
+  department?: string;
   password?: string;
   confirmPassword?: string;
   role: AdminRole;

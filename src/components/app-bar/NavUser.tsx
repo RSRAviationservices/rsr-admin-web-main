@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, LogOut, Shield } from "lucide-react";
+import { ChevronsUpDown, LogOut, Shield, UserCircle } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -105,6 +105,11 @@ export function NavUser() {
             </DropdownMenuLabel>
 
             <DropdownMenuSeparator />
+
+            <DropdownMenuItem onClick={() => navigate("/profile")}>
+              <UserCircle className="mr-2 h-4 w-4" />
+              Account Profile
+            </DropdownMenuItem>
 
             {/* Permissions (if super-admin) */}
             {role === "super-admin" && (

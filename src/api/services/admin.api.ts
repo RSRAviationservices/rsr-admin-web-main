@@ -61,6 +61,10 @@ export const updateAdminStatus = async ({
   return apiClient.patch(`/admin/admins/${id}/status`, { status });
 };
 
+export const deleteAdmin = async (id: string): Promise<{ message: string }> => {
+  return apiClient.delete(`/admin/admins/${id}`);
+};
+
 // Helper to extract data from API response
 const extractData = <T>(response: any): T => {
   if (response?.data !== undefined) {

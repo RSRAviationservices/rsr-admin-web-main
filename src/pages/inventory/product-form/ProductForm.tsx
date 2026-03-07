@@ -164,7 +164,7 @@ export function ProductForm({
                       <FormItem>
                         <FormLabel>Product Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., GPS Antenna" {...field} />
+                          <Input placeholder="e.g., GPS Antenna" {...field} disabled={isSubmitting} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -177,7 +177,7 @@ export function ProductForm({
                       <FormItem>
                         <FormLabel>Part Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., BCD-12345" {...field} />
+                          <Input placeholder="e.g., BCD-12345" {...field} disabled={isSubmitting} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -191,7 +191,7 @@ export function ProductForm({
                     <FormItem>
                       <FormLabel>Brand</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Boeing" {...field} />
+                        <Input placeholder="e.g., Boeing" {...field} disabled={isSubmitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -209,6 +209,7 @@ export function ProductForm({
                           className="resize-none"
                           rows={5}
                           {...field}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -279,6 +280,7 @@ export function ProductForm({
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
+                          disabled={isSubmitting}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -309,6 +311,7 @@ export function ProductForm({
                             type="number"
                             placeholder="e.g., 10"
                             {...field}
+                            disabled={isSubmitting}
                             onChange={(e) =>
                               field.onChange(
                                 e.target.value === ""
@@ -330,7 +333,7 @@ export function ProductForm({
                       <FormItem>
                         <OptionalLabel>Shelf Life</OptionalLabel>
                         <FormControl>
-                          <Input placeholder="e.g., 24 Months" {...field} />
+                          <Input placeholder="e.g., 24 Months" {...field} disabled={isSubmitting} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -347,6 +350,7 @@ export function ProductForm({
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
+                            disabled={isSubmitting}
                           />
                         </FormControl>
                         <FormLabel>Temp. Controlled</FormLabel>
@@ -362,6 +366,7 @@ export function ProductForm({
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
+                            disabled={isSubmitting}
                           />
                         </FormControl>
                         <FormLabel>Hazmat</FormLabel>
@@ -456,6 +461,7 @@ export function ProductForm({
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
+                        disabled={isSubmitting}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -483,7 +489,7 @@ export function ProductForm({
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
-                        disabled={subcategories.length === 0}
+                        disabled={subcategories.length === 0 || isSubmitting}
                       >
                         <FormControl>
                           <SelectTrigger>

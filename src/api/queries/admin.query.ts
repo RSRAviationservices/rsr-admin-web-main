@@ -8,6 +8,7 @@ import {
   updateAdminStatus,
   createAdmin,
   updateAdmin,
+  deleteAdmin,
 } from "../services/admin.api";
 
 import type { AdminAdminsQueryDto } from "@/types/admin";
@@ -72,10 +73,18 @@ export const useUpdateAdminStatus = () => {
       queryClient.invalidateQueries({ queryKey: ["admins"] });
       toast.success("Admin status updated successfully");
     },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to update admin status"
-      );
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+export const useDeleteAdmin = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteAdmin,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admins"] });
     },
   });
 };

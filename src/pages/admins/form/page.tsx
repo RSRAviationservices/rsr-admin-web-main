@@ -35,6 +35,9 @@ export default function AdminFormPage() {
         ? updateMutation.mutateAsync({
             id: adminId,
             data: {
+              fullName: values.fullName,
+              email: values.email || undefined,
+              department: values.department || undefined,
               password: values.password || undefined,
               role: values.role,
               status: values.status,
@@ -43,6 +46,9 @@ export default function AdminFormPage() {
           })
         : createMutation.mutateAsync({
             username: values.username,
+            fullName: values.fullName,
+            email: values.email || undefined,
+            department: values.department || undefined,
             password: values.password!,
             role: values.role,
             status: values.status,
@@ -94,7 +100,7 @@ export default function AdminFormPage() {
           </div>
           <AdminForm
             mode={mode}
-            initialData={adminData}
+            initialData={adminData?.data}
             onSubmit={handleSubmit}
             onCancel={() => navigate("/admins")}
             isSubmitting={isSubmitting}

@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
-import { loginAdmin, logoutAdmin } from '../services/auth.api'
+import { loginAdmin, logoutAdmin, updateAdminProfile } from '../services/auth.api'
 
 import type { LoginFormValues } from '@/pages/auth/hooks/useLoginForm'
 import { useAuthStore } from '@/store/authStore'
@@ -39,6 +39,21 @@ export function useLogoutMutation() {
       toast.error('Logout failed', { description: error.message })
       logoutAction(false)
       navigate('/login')
+    }
+  })
+}
+
+export function useUpdateProfileMutation() {
+  const checkSession = useAuthStore((state) => state.actions.checkSession)
+
+  return useMutation({
+    mutationFn: updateAdminProfile,
+    onSuccess: async () => {
+      await checkSession()
+      toast.success('Profile updated successfully!')
+    },
+    onError: (error: any) => {
+      toast.error('Update failed', { description: error.message })
     }
   })
 }

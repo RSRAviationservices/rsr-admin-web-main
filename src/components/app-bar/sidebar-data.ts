@@ -9,6 +9,7 @@ import {
   Newspaper, // Add this
   // KeyRound
 } from "lucide-react";
+import { AdminRole } from "@/types/admin";
 
 export const navItems = [
   {
@@ -20,27 +21,32 @@ export const navItems = [
     title: "Inventory",
     url: "/inventory",
     icon: Boxes,
+    requiredResource: "inventory",
   },
   {
     title: "Quotes",
     url: "/quotes",
     icon: FileText,
+    requiredResource: "quotes",
   },
   {
     title: "Leads",
     url: "/leads",
     icon: ShoppingCart,
+    requiredResource: "leads",
   },
   {
     title: "Users",
     url: "/users",
     icon: Users,
+    requiredResource: "users",
   },
   // Add Careers section
   {
     title: "Careers",
     url: "/careers",
     icon: Briefcase,
+    requiredResource: "careers",
     items: [
       { title: "Job Postings", url: "/careers" },
       { title: "Applications", url: "/careers/applications" },
@@ -50,10 +56,12 @@ export const navItems = [
     title: "Insights",
     url: "/insights",
     icon: Newspaper, // Add Insights to sidebar
+    requiredResource: "insights",
   },
   {
     title: "Admins",
     url: "/admins",
     icon: UserCog,
+    requiredRole: AdminRole.SUPER_ADMIN,
   },
 ];
