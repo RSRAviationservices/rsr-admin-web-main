@@ -1,6 +1,7 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import AuthGuard from "./guards/AuthGuard";
+import RoleGuard from "./guards/RoleGuard";
 import AdminLayout from "../layouts/AdminLayout";
 import DashboardPage from "../pages/dashboard/page";
 
@@ -19,18 +20,23 @@ import QuoteDetailsPage from "@/pages/quotes/details/page";
 import QuotesPage from "@/pages/quotes/page";
 import UsersPage from "@/pages/users/page";
 import AdminFormPage from "@/pages/admins/form/page";
+import ForbiddenPage from "@/pages/common/ForbiddenPage";
+import ProfilePage from "@/pages/profile/page";
+import { AdminRole } from "@/types/admin";
 
 export default function AppRoutes() {
   return (
     <Routes>
       {/* Public Route */}
       <Route path="/login" element={<AuthPage />} />
+      <Route path="/forbidden" element={<ForbiddenPage />} />
 
       {/* Protected Routes */}
       <Route element={<AuthGuard />}>
         <Route element={<AdminLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/inventory" element={<InventoryPage />} />
           <Route
             path="/inventory/category-form"
@@ -41,8 +47,13 @@ export default function AppRoutes() {
           <Route path="/quotes/:id" element={<QuoteDetailsPage />} />
           <Route path="/leads" element={<LeadsPage />} />
           <Route path="/users" element={<UsersPage />} />
-          <Route path="/admins" element={<AdminsPage />} />
-          <Route path="/admins/form" element={<AdminFormPage />} />
+          
+          {/* Super Admin Only Routes */}
+          <Route element={<RoleGuard allowedRoles={[AdminRole.SUPER_ADMIN]} fallbackPath="/forbidden" />}>
+            <Route path="/admins" element={<AdminsPage />} />
+            <Route path="/admins/form" element={<AdminFormPage />} />
+          </Route>
+
           <Route path="/careers" element={<CareersPage />} />
           <Route path="/careers/form" element={<CareerFormPage />} />
           <Route path="/careers/applications" element={<ApplicationsPage />} />
@@ -50,6 +61,9 @@ export default function AppRoutes() {
           <Route path="/insights/form" element={<InsightFormPage />} />
         </Route>
       </Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

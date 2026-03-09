@@ -17,3 +17,7 @@ export const logoutAdmin = (): Promise<void> => {
 export const checkAdminSession = (): Promise<{ data: Admin }> => {
   return apiClient.get('/admin/auth/me')
 }
+
+export const updateAdminProfile = (data: Partial<Admin>): Promise<{ data: Admin }> => {
+  return apiClient.patch('/admin/auth/me', data)
+}

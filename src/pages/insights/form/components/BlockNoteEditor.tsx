@@ -45,15 +45,25 @@ export function BlockNoteEditorComponent({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="flex-1 w-full flex flex-col">
       <div
-        className={`border rounded-lg overflow-hidden bg-white min-h-64 ${
-          error ? "border-red-500" : "border-gray-200"
+        className={`flex-1 transition-all duration-300 ${
+          error ? "border-l-4 border-red-500 pl-4" : ""
         }`}
       >
-        <BlockNoteView editor={editor} onChange={handleChange} theme="light" />
+        <BlockNoteView 
+          editor={editor} 
+          onChange={handleChange} 
+          theme="light"
+          formattingToolbar={true}
+          className="min-h-[500px] pb-40"
+        />
       </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && (
+        <p className="mt-2 text-xs font-bold text-red-500 uppercase tracking-widest pl-1">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
