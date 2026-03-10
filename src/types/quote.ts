@@ -43,5 +43,5 @@ export interface AdminQuotesQueryDto {
   page?: number
   limit?: number
   search?: string
-  status?: QuoteStatus
+  status?: QuoteStatus | string
 }
