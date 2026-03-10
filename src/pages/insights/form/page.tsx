@@ -1,4 +1,4 @@
-import { ArrowLeft, Save, Trash2, Eye, Layout, Settings, Search, Clock, Info } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -30,13 +30,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageUpload } from "@/components/common/ImageUpload";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import PageLayout from "@/layouts/PageLayout";
 import { InsightStatus, INSIGHT_CATEGORIES } from "@/types/insight";
 import { AssetContext } from "@/types/asset";
@@ -61,7 +59,6 @@ export default function InsightFormPage() {
     resetForm,
     hydrateForm,
     setMode,
-    setIsSubmitting,
     clearAllErrors,
   } = useInsightFormStore();
 

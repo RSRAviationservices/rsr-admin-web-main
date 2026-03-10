@@ -7,7 +7,7 @@ import type {
   Permission,
   PermissionDefinition,
 } from "@/types/admin";
-import type { PaginatedResponse } from "@/types";
+import type { ApiResponse, PaginatedResponse } from "@/types";
 
 export const fetchAdmins = async (
   params: AdminAdminsQueryDto
@@ -15,7 +15,7 @@ export const fetchAdmins = async (
   return apiClient.get("/admin/admins", { params });
 };
 
-export const fetchAdminById = async (id: string): Promise<Admin> => {
+export const fetchAdminById = async (id: string): Promise<ApiResponse<Admin>> => {
   return apiClient.get(`/admin/admins/${id}`);
 };
 
@@ -28,11 +28,14 @@ export const fetchPermissions = async (): Promise<PermissionDefinition[]> => {
 
 export const createAdmin = async (data: {
   username: string;
+  fullName: string;
+  email?: string;
+  department?: string;
   password: string;
   role: string;
   status: string;
   permissions: Permission[];
-}): Promise<Admin> => {
+}): Promise<ApiResponse<Admin>> => {
   return apiClient.post("/admin/admins", data);
 };
 
@@ -42,12 +45,15 @@ export const updateAdmin = async ({
 }: {
   id: string;
   data: {
+    fullName?: string;
+    email?: string;
+    department?: string;
     password?: string;
     role?: string;
     status?: string;
     permissions?: Permission[];
   };
-}): Promise<Admin> => {
+}): Promise<ApiResponse<Admin>> => {
   return apiClient.patch(`/admin/admins/${id}`, data);
 };
 

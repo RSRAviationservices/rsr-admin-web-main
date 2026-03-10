@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import * as React from "react"
 
 interface FormFieldProps {
@@ -43,6 +44,7 @@ interface TextInputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  className?: string;
 }
 
 export function TextInput({
@@ -50,6 +52,7 @@ export function TextInput({
   onChange,
   placeholder,
   disabled,
+  className,
 }: TextInputProps) {
   return (
     <Input
@@ -57,7 +60,7 @@ export function TextInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      className="w-full"
+      className={cn("w-full", className)}
     />
   );
 }

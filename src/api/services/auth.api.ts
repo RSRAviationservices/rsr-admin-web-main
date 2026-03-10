@@ -18,6 +18,6 @@ export const checkAdminSession = (): Promise<{ data: Admin }> => {
   return apiClient.get('/admin/auth/me')
 }
 
-export const updateAdminProfile = (data: Partial<Admin>): Promise<{ data: Admin }> => {
+export const updateAdminProfile = (data: Partial<Admin> & { password?: string }): Promise<{ data: Admin }> => {
   return apiClient.patch('/admin/auth/me', data)
 }

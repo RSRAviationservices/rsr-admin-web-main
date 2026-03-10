@@ -14,7 +14,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/store/authStore";
 import { useUpdateProfileMutation } from "@/api/queries/auth.query";
 import PageHeader from "@/components/common/PageHeader";
