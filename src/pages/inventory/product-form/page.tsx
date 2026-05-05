@@ -35,6 +35,7 @@ export default function ProductFormPage() {
       ...values,
       tags: values.tags?.map((t) => t.value),
       applications: values.applications?.map((a) => a.value),
+      ...(values.subcategorySlug ? {} : { subcategorySlug: undefined }),
     };
 
     const promise =
