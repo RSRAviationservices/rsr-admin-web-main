@@ -485,18 +485,19 @@ export function ProductForm({
                   name="subcategorySlug"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Subcategory</FormLabel>
+                      <OptionalLabel>Subcategory</OptionalLabel>
                       <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
+                        onValueChange={(val: string) => field.onChange(val === "__none__" ? "" : val)}
+                        value={field.value || ""}
                         disabled={subcategories.length === 0 || isSubmitting}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a subcategory" />
+                            <SelectValue placeholder="Select a subcategory (optional)" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value="__none__">None</SelectItem>
                           {subcategories.map((slug) => (
                             <SelectItem key={slug} value={slug}>
                               {slug}
