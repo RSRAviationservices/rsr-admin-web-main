@@ -47,7 +47,7 @@ const defaultValues: ProductFormValues = {
   brand: "",
   description: "",
   categorySlug: "",
-  subcategorySlug: "",
+  subcategorySlug: "none",
   images: [], // Add default empty array
   tags: [],
   applications: [],
@@ -134,7 +134,7 @@ export function ProductForm({
 
   // Reset subcategory when main category changes
   useEffect(() => {
-    form.setValue("subcategorySlug", "");
+    form.setValue("subcategorySlug", "none");
   }, [selectedCategorySlug, form]);
 
   return (
@@ -487,8 +487,8 @@ export function ProductForm({
                     <FormItem>
                       <OptionalLabel>Subcategory</OptionalLabel>
                       <Select
-                        onValueChange={(val: string) => field.onChange(val === "__none__" ? "" : val)}
-                        value={field.value || ""}
+                        onValueChange={(val: string) => field.onChange(val)}
+                        value={field.value || "none"}
                         disabled={subcategories.length === 0 || isSubmitting}
                       >
                         <FormControl>
@@ -497,7 +497,7 @@ export function ProductForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="__none__">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {subcategories.map((slug) => (
                             <SelectItem key={slug} value={slug}>
                               {slug}
