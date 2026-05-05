@@ -46,16 +46,22 @@ export function PermissionSelector({
     );
 
     if (existingIndex >= 0) {
-      const currentActions = newPermissions[existingIndex].actions;
+      const currentActions = [...newPermissions[existingIndex].actions];
       if (currentActions.includes(action)) {
         const updatedActions = currentActions.filter((a) => a !== action);
         if (updatedActions.length === 0) {
           newPermissions.splice(existingIndex, 1);
         } else {
-          newPermissions[existingIndex].actions = updatedActions;
+          newPermissions[existingIndex] = {
+            ...newPermissions[existingIndex],
+            actions: updatedActions,
+          };
         }
       } else {
-        newPermissions[existingIndex].actions = [...currentActions, action];
+        newPermissions[existingIndex] = {
+          ...newPermissions[existingIndex],
+          actions: [...currentActions, action],
+        };
       }
     } else {
       newPermissions.push({ resource, actions: [action] });
@@ -80,7 +86,10 @@ export function PermissionSelector({
       }
     } else {
       if (existingIndex >= 0) {
-        newPermissions[existingIndex].actions = allActions;
+        newPermissions[existingIndex] = {
+          ...newPermissions[existingIndex],
+          actions: allActions,
+        };
       } else {
         newPermissions.push({ resource, actions: allActions });
       }
@@ -134,6 +143,17 @@ export function PermissionSelector({
     );
   }
 
+  // Map of backend action keys to UI display labels
+  const actionLabelMap: Record<string, string> = {
+    read: "Read",
+    create: "Write",
+    update: "Update",
+    delete: "Delete",
+  };
+
+  // The set of all possible actions we want to show as columns
+  const standardActions = ["read", "create", "update", "delete"];
+
   return (
     <div>
       <Card className="rounded-md">
@@ -156,10 +176,11 @@ export function PermissionSelector({
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[200px]">Resource</TableHead>
-                <TableHead className="w-[120px] text-center">Read</TableHead>
-                <TableHead className="w-[120px] text-center">Write</TableHead>
-                <TableHead className="w-[120px] text-center">Update</TableHead>
-                <TableHead className="w-[120px] text-center">Delete</TableHead>
+                {standardActions.map((action) => (
+                  <TableHead key={action} className="w-[120px] text-center">
+                    {actionLabelMap[action] || action}
+                  </TableHead>
+                ))}
                 <TableHead>Description</TableHead>
               </TableRow>
             </TableHeader>
@@ -194,50 +215,20 @@ export function PermissionSelector({
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center">
-                      <Checkbox
-                        checked={isActionSelected(
-                          permissionDef.resource,
-                          "read"
-                        )}
-                        onCheckedChange={() =>
-                          toggleAction(permissionDef.resource, "read")
-                        }
-                      />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Checkbox
-                        checked={isActionSelected(
-                          permissionDef.resource,
-                          "write"
-                        )}
-                        onCheckedChange={() =>
-                          toggleAction(permissionDef.resource, "write")
-                        }
-                      />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Checkbox
-                        checked={isActionSelected(
-                          permissionDef.resource,
-                          "update"
-                        )}
-                        onCheckedChange={() =>
-                          toggleAction(permissionDef.resource, "update")
-                        }
-                      />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Checkbox
-                        checked={isActionSelected(
-                          permissionDef.resource,
-                          "delete"
-                        )}
-                        onCheckedChange={() =>
-                          toggleAction(permissionDef.resource, "delete")
-                        }
-                      />
-                    </TableCell>
+                    {standardActions.map((action) => (
+                      <TableCell key={action} className="text-center">
+                        <Checkbox
+                          disabled={!permissionDef.actions.includes(action)}
+                          checked={isActionSelected(
+                            permissionDef.resource,
+                            action
+                          )}
+                          onCheckedChange={() =>
+                            toggleAction(permissionDef.resource, action)
+                          }
+                        />
+                      </TableCell>
+                    ))}
                     <TableCell>
                       <p className="text-sm text-muted-foreground">
                         {permissionDef.description}

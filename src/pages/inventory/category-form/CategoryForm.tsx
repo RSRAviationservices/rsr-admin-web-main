@@ -91,7 +91,7 @@ export function CategoryForm({
                     <FormItem>
                       <FormLabel>Category Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Avionics" {...field} />
+                        <Input placeholder="e.g., Avionics" {...field} disabled={isSubmitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -109,6 +109,7 @@ export function CategoryForm({
                           className="resize-none"
                           rows={5}
                           {...field}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -139,6 +140,7 @@ export function CategoryForm({
                         <Input
                           placeholder="A concise, SEO-friendly title"
                           {...field}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -156,6 +158,7 @@ export function CategoryForm({
                           placeholder="A short description for search engine results."
                           className="resize-none"
                           {...field}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -192,6 +195,7 @@ export function CategoryForm({
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                     </FormItem>

@@ -28,7 +28,7 @@ export const productFormSchema = z.object({
   brand: z.string().min(2, 'Brand is required.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   categorySlug: z.string({ error: 'Please select a category.' }).min(1, 'Category is required.'),
-  subcategorySlug: z.string().min(1, 'Subcategory is required.'),
+  subcategorySlug: z.string().optional().or(z.literal('')),
   // Add images field
   images: z
     .array(z.string().url())

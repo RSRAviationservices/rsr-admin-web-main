@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, Shield, AlertCircle, User, Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { Lock, Shield, AlertCircle, User, Loader2, Crown, Eye, EyeOff, Mail, Building2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -45,10 +45,16 @@ export function AdminForm({
   onCancel,
   isSubmitting,
 }: AdminFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const form = useForm<AdminFormData>({
     resolver: zodResolver(getAdminFormSchema(mode)),
     defaultValues: {
       username: "",
+      fullName: "",
+      email: "",
+      department: "",
       password: "",
       confirmPassword: "",
       role: AdminRole.ADMIN,
@@ -61,20 +67,14 @@ export function AdminForm({
     if (mode === "edit" && initialData) {
       form.reset({
         username: initialData.username,
+        fullName: initialData.fullName,
+        email: initialData.email || "",
+        department: initialData.department || "",
         password: "",
         confirmPassword: "",
         role: initialData.role,
         status: initialData.status,
         permissions: initialData.permissions || [],
-      });
-    } else {
-      form.reset({
-        username: "",
-        password: "",
-        confirmPassword: "",
-        role: AdminRole.ADMIN,
-        status: AdminStatus.ACTIVE,
-        permissions: [],
       });
     }
   }, [mode, initialData, form]);
@@ -95,7 +95,7 @@ export function AdminForm({
               <h3 className="text-lg font-medium">Account Information</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="username"
@@ -104,9 +104,9 @@ export function AdminForm({
                     <FormLabel>Username *</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="admin.username"
+                        placeholder="e.g., john.doe"
                         {...field}
-                        disabled={mode === "edit"}
+                        disabled={mode === "edit" || isSubmitting}
                       />
                     </FormControl>
                     <FormMessage />
@@ -116,21 +116,90 @@ export function AdminForm({
 
               <FormField
                 control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name *</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., John Doe"
+                        {...field}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <FormLabel>Email Address</FormLabel>
+                    </div>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="e.g., john@example.com"
+                        {...field}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="department"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center space-x-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <FormLabel>Department</FormLabel>
+                    </div>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., IT, Sales, Support"
+                        {...field}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <FormLabel>System Role *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select role" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value={AdminRole.SUPER_ADMIN}>
+                          <div className="flex items-center space-x-2">
+                            <Crown className="h-4 w-4 text-purple-600" />
+                            <span>Super Admin</span>
+                          </div>
+                        </SelectItem>
                         <SelectItem value={AdminRole.ADMIN}>
                           <div className="flex items-center space-x-2">
-                            <Shield className="h-4 w-4" />
-                            <span>Admin</span>
+                            <Shield className="h-4 w-4 text-blue-600" />
+                            <span>Standard Admin</span>
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -145,8 +214,8 @@ export function AdminForm({
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <FormLabel>Account Status *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select status" />
@@ -177,28 +246,42 @@ export function AdminForm({
               <h3 className="text-lg font-medium">Security Settings</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Password{" "}
-                      {isPasswordRequired
-                        ? "*"
-                        : "(Leave blank to keep current)"}
+                      {mode === "create" ? "Password *" : "Reset Password"}
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder={
-                          isPasswordRequired
-                            ? "Enter secure password"
-                            : "Enter new password"
-                        }
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder={
+                            isPasswordRequired
+                              ? "Enter secure password"
+                              : "Leave blank to keep current"
+                          }
+                          {...field}
+                          disabled={isSubmitting}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          disabled={isSubmitting}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -211,14 +294,35 @@ export function AdminForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Confirm Password {isPasswordRequired ? "*" : ""}
+                      Confirm {isPasswordRequired ? "Password *" : "New Password"}
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Confirm password"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder={
+                            isPasswordRequired
+                              ? "Confirm password"
+                              : "Leave blank to keep current"
+                          }
+                          {...field}
+                          disabled={isSubmitting}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          disabled={isSubmitting}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -230,10 +334,10 @@ export function AdminForm({
               <div className="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg">
                 <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
                 <div className="text-sm text-blue-700">
-                  <p className="font-medium">Password Update</p>
+                  <p className="font-medium">Password Management</p>
                   <p>
-                    Leave password fields empty to keep the current password
-                    unchanged.
+                    As a Super Admin, you can reset this admin's password here. 
+                    Leave these fields empty to keep the existing password.
                   </p>
                 </div>
               </div>
@@ -273,7 +377,7 @@ export function AdminForm({
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              {mode === "create" ? "Create Admin" : "Save Changes"}
+              {mode === "create" ? "Create Admin Account" : "Save Admin Changes"}
             </Button>
           </div>
         </form>

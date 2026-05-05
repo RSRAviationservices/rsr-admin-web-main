@@ -6,10 +6,14 @@ import {
   CheckCircle,
   Crown,
   Settings,
+  Trash2,
+  Edit,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { useUpdateAdminStatus } from "@/api/queries/admin.query";
+import { useUpdateAdminStatus, useDeleteAdmin } from "@/api/queries/admin.query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,10 +25,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { type Admin, AdminRole, AdminStatus } from "@/types/admin";
+import { useAuthStore } from "@/store/authStore";
 
 
-const formatDate = (date: Date) => {
+const formatDate = (date: string | Date | undefined) => {
+  if (!date) return "Never";
   return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "short",
@@ -77,49 +93,123 @@ const getStatusBadge = (status: AdminStatus) => {
 };
 
 const AdminActionsCell = ({ row }: { row: Row<Admin> }) => {
-  const admin = row.original;
-  const mutation = useUpdateAdminStatus();
+  const admin = row?.original;
+  const navigate = useNavigate();
+  const currentAdmin = useAuthStore((state) => state.admin);
+  const updateStatusMutation = useUpdateAdminStatus();
+  const deleteMutation = useDeleteAdmin();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // RBAC: Only Super Admin can manage other admins
+  if (!currentAdmin || !admin || currentAdmin.role !== AdminRole.SUPER_ADMIN) {
+    return null;
+  }
+
+  // Prevent actions on self
+  const isSelf = currentAdmin.id === admin.id;
+  // Extra protection for other Super Admins
+  const isTargetSuperAdmin = admin.role === AdminRole.SUPER_ADMIN;
 
   const handleStatusUpdate = (status: AdminStatus) => {
-    const promise = mutation.mutateAsync({ id: admin.id, status });
+    if (isSelf) {
+      toast.warning("You cannot change your own status.");
+      return;
+    }
+    if (isTargetSuperAdmin) {
+      toast.warning("Super Admin status cannot be modified.");
+      return;
+    }
+
+    const promise = updateStatusMutation.mutateAsync({ id: admin.id, status });
     toast.promise(promise, {
       loading: "Updating admin status...",
-      success: `Admin has been ${status}.`,
+      success: `Admin has been ${status === AdminStatus.ACTIVE ? 'activated' : 'suspended'}.`,
       error: (err) => `Error: ${err.message}`,
     });
   };
 
+  const handleDelete = async () => {
+    const promise = deleteMutation.mutateAsync(admin.id);
+    toast.promise(promise, {
+      loading: "Deleting admin account...",
+      success: "Admin account deleted successfully.",
+      error: (err) => `Error: ${err.message}`,
+    });
+    setShowDeleteDialog(false);
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-        <DropdownMenuItem>Edit Permissions</DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {admin.status === AdminStatus.ACTIVE ? (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          
           <DropdownMenuItem
-            className="text-red-600"
-            onClick={() => handleStatusUpdate(AdminStatus.SUSPENDED)}
+            onClick={() => navigate(`/admins/form?mode=edit&id=${admin.id}`)}
           >
-            <Ban className="mr-2 h-4 w-4" />
-            Suspend Admin
+            <Edit className="mr-2 h-4 w-4" />
+            Edit Admin
           </DropdownMenuItem>
-        ) : (
+
+          <DropdownMenuSeparator />
+          
+          {admin.status === AdminStatus.ACTIVE ? (
+            <DropdownMenuItem
+              className="text-amber-600"
+              disabled={isSelf || isTargetSuperAdmin}
+              onClick={() => handleStatusUpdate(AdminStatus.SUSPENDED)}
+            >
+              <Ban className="mr-2 h-4 w-4" />
+              Suspend Admin
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              className="text-green-600"
+              disabled={isSelf || isTargetSuperAdmin}
+              onClick={() => handleStatusUpdate(AdminStatus.ACTIVE)}
+            >
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Activate Admin
+            </DropdownMenuItem>
+          )}
+
           <DropdownMenuItem
-            className="text-green-600"
-            onClick={() => handleStatusUpdate(AdminStatus.ACTIVE)}
+            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+            disabled={isSelf || isTargetSuperAdmin}
+            onClick={() => setShowDeleteDialog(true)}
           >
-            <CheckCircle className="mr-2 h-4 w-4" />
-            Activate Admin
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete Admin
           </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Admin Account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{admin.username}</strong>? This action cannot be undone and they will immediately lose access.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
@@ -153,9 +243,10 @@ export const adminColumns: ColumnDef<Admin>[] = [
       const admin = row.original;
       return (
         <div className="space-y-1">
-          <p className="font-medium text-sm">{admin.username}</p>
-          <div className="flex items-center space-x-1">
+          <p className="font-medium text-sm">{admin.fullName}</p>
+          <div className="flex items-center space-x-2">
             {getRoleBadge(admin.role)}
+            <span className="text-xs text-muted-foreground">@{admin.username}</span>
           </div>
         </div>
       );

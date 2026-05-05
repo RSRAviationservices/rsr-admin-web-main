@@ -13,20 +13,40 @@ import {
   SidebarMenuSubItem
 } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/store/authStore'
+import { AdminRole } from '@/types/admin'
 
 type NavItem = {
   title: string
   url: string
   icon?: LucideIcon
   items?: { title: string; url: string }[]
+  requiredRole?: AdminRole
+  requiredResource?: string
 }
 
 export function NavMain({ items }: { items: NavItem[] }) {
   const { pathname } = useLocation()
+  const { admin } = useAuthStore()
+
+  const filteredItems = items.filter((item) => {
+    // 1. Role Check
+    if (item.requiredRole && admin?.role !== AdminRole.SUPER_ADMIN) {
+      if (admin?.role !== item.requiredRole) return false
+    }
+
+    // 2. Resource/Permission Check
+    if (item.requiredResource && admin?.role !== AdminRole.SUPER_ADMIN) {
+      const hasPermission = admin?.permissions?.some((p) => p.resource === item.requiredResource)
+      if (!hasPermission) return false
+    }
+
+    return true
+  })
 
   return (
     <SidebarMenu>
-      {items.map((item) => {
+      {filteredItems.map((item) => {
         const isActive = pathname.startsWith(item.url)
         const isChildActive = !!item.items?.find((child) => child.url === pathname)
 

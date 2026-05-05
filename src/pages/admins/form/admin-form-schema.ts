@@ -13,6 +13,16 @@ const baseSchema = z.object({
       "Username can only contain letters, numbers, dots, underscores, and hyphens"
     )
     .toLowerCase(),
+  fullName: z
+    .string()
+    .min(2, "Full name must be at least 2 characters")
+    .max(100, "Full name must not exceed 100 characters"),
+  email: z
+    .string()
+    .email("Invalid email address")
+    .optional()
+    .or(z.literal("")),
+  department: z.string().optional().or(z.literal("")),
   role: z.nativeEnum(AdminRole),
   status: z.nativeEnum(AdminStatus),
   permissions: z

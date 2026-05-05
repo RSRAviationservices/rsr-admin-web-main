@@ -59,9 +59,9 @@ export default function ProductFormPage() {
     ? {
       ...productResponse.data,
       images: productResponse.data.images || [],
-      tags: productResponse.data.tags?.map((value) => ({ value })) || [],
+      tags: productResponse.data.tags?.map((value: string) => ({ value })) || [],
       applications:
-        productResponse.data.applications?.map((value) => ({ value })) || [],
+        productResponse.data.applications?.map((value: string) => ({ value })) || [],
     }
     : undefined;
 
