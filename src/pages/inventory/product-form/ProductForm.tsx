@@ -48,9 +48,10 @@ const defaultValues: ProductFormValues = {
   description: "",
   categorySlug: "",
   subcategorySlug: "none",
-  images: [], // Add default empty array
+  images: [],
   tags: [],
   applications: [],
+  specifications: [],
   availability: {
     status: "in-stock",
     leadTime: "",
@@ -113,12 +114,22 @@ export function ProductForm({
     name: "tags",
   });
 
+  const {
+    fields: specFields,
+    append: appendSpec,
+    remove: removeSpec,
+  } = useFieldArray({
+    control: form.control,
+    name: "specifications",
+  });
+
   useEffect(() => {
     if (mode === "edit" && initialData) {
       const dataToReset = {
         ...defaultValues,
         ...initialData,
-        images: initialData.images || [], // Ensure images is always an array
+        images: initialData.images || [],
+        specifications: initialData.specifications || [],
         availability: {
           ...defaultValues.availability,
           ...initialData.availability,
@@ -375,6 +386,64 @@ export function ProductForm({
                   />
                 </div>
               </div>
+              {/* Specifications Section */}
+              <div className="space-y-4 pt-4">
+                <div>
+                  <h3 className="text-lg font-medium">Specifications</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Add technical specifications as key-value pairs.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  {specFields.map((field, index) => (
+                    <div key={field.id} className="flex items-start gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`specifications.${index}.key`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input placeholder="e.g., Voltage" {...field} disabled={isSubmitting} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`specifications.${index}.value`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input placeholder="e.g., 12V DC" {...field} disabled={isSubmitting} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeSpec(index)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => appendSpec({ key: "", value: "" })}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Specification
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
               <div className="space-y-2 pt-4">
                 <OptionalLabel>Tags</OptionalLabel>
                 {tagFields.map((field, index) => (

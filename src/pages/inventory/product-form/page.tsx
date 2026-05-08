@@ -36,6 +36,11 @@ export default function ProductFormPage() {
       tags: values.tags?.map((t) => t.value),
       applications: values.applications?.map((a) => a.value),
       subcategorySlug: values.subcategorySlug || "none",
+      specifications: Object.fromEntries(
+        (values.specifications || [])
+          .filter((s) => s.key && s.value)
+          .map((s) => [s.key!, s.value!])
+      ),
     };
 
     const promise =
@@ -63,6 +68,9 @@ export default function ProductFormPage() {
       tags: productResponse.data.tags?.map((value: string) => ({ value })) || [],
       applications:
         productResponse.data.applications?.map((value: string) => ({ value })) || [],
+      specifications: Object.entries(productResponse.data.specifications || {}).map(
+        ([key, value]) => ({ key, value })
+      ),
     }
     : undefined;
 
