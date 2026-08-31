@@ -28,3 +28,5 @@ vite.config.d.ts
 vite.config.js
 
 *.env.*
+.vercel
+.env*.local

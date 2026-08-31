@@ -6,6 +6,7 @@ import { DataTableFacetedFilter } from '@/components/common/data-table-faceted-f
 import { DataTableViewOptions } from '@/components/common/data-table-view-options'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { BulkUploadDialog } from './BulkUploadDialog'
 
 interface ProductsToolbarProps<TData> {
   table: Table<TData>
@@ -65,6 +66,7 @@ export function ProductsDataTableToolbar<TData>({ table, onDelete }: ProductsToo
           </Button>
         )}
         <DataTableViewOptions table={table} />
+        <BulkUploadDialog />
         <Button
           size="sm"
           className="h-8"

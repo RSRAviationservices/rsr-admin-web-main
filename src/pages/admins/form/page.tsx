@@ -45,13 +45,10 @@ export default function AdminFormPage() {
             },
           })
         : createMutation.mutateAsync({
+            // Backend CreateAdminDto only accepts username, password and
+            // optional permissions (see createAdmin in admin.api.ts).
             username: values.username,
-            fullName: values.fullName,
-            email: values.email || undefined,
-            department: values.department || undefined,
             password: values.password!,
-            role: values.role,
-            status: values.status,
             permissions: values.permissions,
           });
 

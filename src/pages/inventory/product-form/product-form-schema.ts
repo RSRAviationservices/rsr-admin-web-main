@@ -38,6 +38,14 @@ export const productFormSchema = z.object({
   applications: z
     .array(z.object({ value: z.string().min(1, 'Application cannot be empty.') }))
     .optional(),
+  specifications: z
+    .array(
+      z.object({
+        key: z.string().optional().or(z.literal('')),
+        value: z.string().optional().or(z.literal('')),
+      })
+    )
+    .optional(),
   availability: availabilitySchema,
   storage: storageSchema,
   compliance: complianceSchema,
