@@ -28,15 +28,16 @@ export const fetchPermissions = async (): Promise<PermissionDefinition[]> => {
 
 export const createAdmin = async (data: {
   username: string;
-  fullName: string;
-  email?: string;
-  department?: string;
   password: string;
-  role: string;
-  status: string;
-  permissions: Permission[];
+  permissions?: Permission[];
 }): Promise<ApiResponse<Admin>> => {
-  return apiClient.post("/admin/admins", data);
+  // Backend mounts admin creation on the admin-auth controller, not admin/admins
+  // (POST /api/v1/admin/auth/users — session + SUPER_ADMIN guarded).
+  // CreateAdminDto is whitelist + forbidNonWhitelisted: it accepts only
+  // username, password and optional permissions. role is hard-coded to ADMIN
+  // and status defaults to active server-side; fullName/email/department have
+  // no column in the Admin schema, so sending any of them returns a 400.
+  return apiClient.post("/admin/auth/users", data);
 };
 
 export const updateAdmin = async ({
