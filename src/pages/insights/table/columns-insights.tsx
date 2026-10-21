@@ -120,7 +120,7 @@ const InsightActionsCell = ({ row }: { row: Row<Insight> }) => {
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuItem
             onClick={() =>
-              window.open(`/insights/form?id=${insight.id}`, "_self")
+              window.open(`/insights/form?mode=edit&id=${insight.id}`, "_self")
             }
           >
             <Edit className="mr-2 h-4 w-4" />
