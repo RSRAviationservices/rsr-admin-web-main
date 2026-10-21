@@ -98,10 +98,27 @@ export default function InsightFormPage() {
       return;
     }
 
-    const cleanedData = {
-      ...formData,
+    if (JSON.stringify(formData.content ?? "").includes('"url":"data:')) {
+      toast.error("Images are still uploading", {
+        description: "Please wait a moment and try again.",
+      });
+      return;
+    }
+
+    // Backend ValidationPipe rejects unknown fields and validates empty
+    // strings, so drop UI-only fields and blank optionals.
+    const { categoryName: _categoryName, ...rest } = formData as typeof formData & {
+      categoryName?: string;
+    };
+    const cleanedData: Record<string, any> = {
+      ...rest,
+      // Backend expects an object (@IsObject), not a bare blocks array
+      content: Array.isArray(rest.content) ? { blocks: rest.content } : rest.content,
       tags: formData.tags?.filter((tag) => tag.trim()) || [],
     };
+    for (const key of ["slug", "ogImage", "metaTitle", "metaDescription", "publishedAt"]) {
+      if (!cleanedData[key]?.toString().trim()) delete cleanedData[key];
+    }
 
     const promise = mode === "create" 
       ? createMutation.mutateAsync(cleanedData as any)
@@ -398,6 +415,7 @@ export default function InsightFormPage() {
                   content={formData.content || {}}
                   onChange={setContent}
                   error={errors.content}
+                  contextId={insightId || undefined}
                 />
               </div>
             </div>
