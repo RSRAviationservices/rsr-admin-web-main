@@ -43,10 +43,14 @@ import { cn } from "@/lib/utils";
 export default function InsightFormPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const mode = (searchParams.get("mode") || "create") as "create" | "edit";
   const insightId = searchParams.get("id");
+  const mode = (searchParams.get("mode") || (insightId ? "edit" : "create")) as
+    | "create"
+    | "edit";
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  // BlockNote only reads initialContent on mount, so wait for hydration
+  const [hydratedId, setHydratedId] = useState<string | null>(null);
 
   const {
     formData,
@@ -83,6 +87,7 @@ export default function InsightFormPage() {
   useEffect(() => {
     if (mode === "edit" && insightData?.data) {
       hydrateForm(insightData.data);
+      setHydratedId(insightData.data.id);
     }
   }, [hydrateForm, insightData, mode]);
 
@@ -411,12 +416,17 @@ export default function InsightFormPage() {
 
               {/* Editor Section */}
               <div className="pb-32">
+                {mode === "create" || hydratedId === insightId ? (
                 <BlockNoteEditorComponent
+                  key={hydratedId ?? "new"}
                   content={formData.content || {}}
                   onChange={setContent}
                   error={errors.content}
                   contextId={insightId || undefined}
                 />
+                ) : (
+                  <Skeleton className="h-[500px] w-full" />
+                )}
               </div>
             </div>
           </div>
