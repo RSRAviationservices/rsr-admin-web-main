@@ -56,14 +56,22 @@ export function ProductsDataTable() {
 
   const debouncedSearch = useDebounce(searchFilter?.value as string, 500)
 
+  const filterParams = React.useMemo(() => {
+    // The faceted filter stores an array of selected values; the API takes a single boolean
+    const statuses = (statusFilter?.value as boolean[] | undefined) ?? []
+    return {
+      search: debouncedSearch,
+      isActive: statuses.length === 1 ? statuses[0] : undefined
+    }
+  }, [debouncedSearch, statusFilter])
+
   const queryParams = React.useMemo(() => {
     return {
       page: pagination.pageIndex + 1,
       limit: pagination.pageSize,
-      search: debouncedSearch,
-      isActive: statusFilter?.value as boolean | undefined
+      ...filterParams
     }
-  }, [pagination, debouncedSearch, statusFilter])
+  }, [pagination, filterParams])
 
   const { data: response, isLoading, isError } = useGetProducts(queryParams)
   const data = response?.data ?? []
@@ -117,7 +125,7 @@ export function ProductsDataTable() {
 
   return (
     <div className="space-y-4 w-full h-full">
-      <ProductsDataTableToolbar table={table} onDelete={handleBulkDelete} />
+      <ProductsDataTableToolbar table={table} onDelete={handleBulkDelete} exportParams={filterParams} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>

@@ -14,6 +14,13 @@ export const fetchProducts = async (
   return apiClient.get("/inventory/products", { params });
 };
 
+// Same filters as fetchProducts, but returns every matching product (no pagination)
+export const exportProducts = async (
+  params: Omit<AdminProductsQueryDto, "page" | "limit">
+): Promise<{ data: Product[] }> => {
+  return apiClient.get("/inventory/products/export", { params });
+};
+
 export const fetchProductById = async (id: string): Promise<{ data: Product }> => {
   return apiClient.get(`/inventory/products/${id}`);
 };
