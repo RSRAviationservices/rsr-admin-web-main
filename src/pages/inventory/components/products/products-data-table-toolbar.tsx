@@ -1,21 +1,45 @@
 import type { Table } from '@tanstack/react-table'
-import { PlusCircle, Trash2, X } from 'lucide-react'
+import { FileSpreadsheet, Loader2, PlusCircle, Trash2, X } from 'lucide-react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 
 import { DataTableFacetedFilter } from '@/components/common/data-table-faceted-filter'
 import { DataTableViewOptions } from '@/components/common/data-table-view-options'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { exportProducts } from '@/api/services/inventory.api'
+import type { AdminProductsQueryDto } from '@/types/inventory'
 import { BulkUploadDialog } from './BulkUploadDialog'
+import { downloadProductsExcel } from './export-products'
 
 interface ProductsToolbarProps<TData> {
   table: Table<TData>
   onDelete?: (ids: string[]) => void
+  exportParams?: Omit<AdminProductsQueryDto, 'page' | 'limit'>
 }
 
-export function ProductsDataTableToolbar<TData>({ table, onDelete }: ProductsToolbarProps<TData>) {
+export function ProductsDataTableToolbar<TData>({ table, onDelete, exportParams }: ProductsToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
   const navigate = useNavigate()
+  const [isExporting, setIsExporting] = useState(false)
+
+  const handleExport = async () => {
+    setIsExporting(true)
+    try {
+      const { data } = await exportProducts(exportParams ?? {})
+      if (data.length === 0) {
+        toast.info('No products to export')
+        return
+      }
+      await downloadProductsExcel(data)
+      toast.success(`Exported ${data.length} products`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to export products')
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   const statusOptions = [
     { label: 'Active', value: true },
@@ -66,6 +90,20 @@ export function ProductsDataTableToolbar<TData>({ table, onDelete }: ProductsToo
           </Button>
         )}
         <DataTableViewOptions table={table} />
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8"
+          onClick={handleExport}
+          disabled={isExporting}
+        >
+          {isExporting ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+          )}
+          Export Excel
+        </Button>
         <BulkUploadDialog />
         <Button
           size="sm"
